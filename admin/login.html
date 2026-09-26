@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta name="theme-color" content="#062F52" />
+<title>Admin Login | MMC Career Readiness Grant™ 2027–28</title>
+<link rel="icon" type="image/png" href="/public/images/mmc-grant/brand/mmc-logo.png" />
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@600;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --navy: #062F52;
+  --dark: #04182B;
+  --blue: #1769AA;
+  --blue-bright: #2F73B9;
+  --yellow: #FFC928;
+  --white: #FFFFFF;
+  --soft: #F5F8FC;
+  --text: #0B2136;
+  --muted: #4A6479;
+  --radius: 14px;
+  --ease: cubic-bezier(.22,.61,.36,1);
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  background: var(--dark);
+  color: var(--white);
+  min-height: 100vh;
+  min-height: 100dvh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  position: relative;
+  overflow: hidden;
+}
+.bg-glow {
+  position: absolute;
+  width: 600px;
+  height: 600px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(23, 105, 170, 0.28) 0%, rgba(6, 47, 82, 0.05) 70%, transparent 100%);
+  pointer-events: none;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+}
+.login-card {
+  position: relative;
+  z-index: 2;
+  width: 100%;
+  max-width: 440px;
+  background: rgba(6, 47, 82, 0.82);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 20px;
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.45);
+  padding: 40px 36px;
+  text-align: center;
+}
+.brand-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 18px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  margin-bottom: 22px;
+}
+.brand-badge img {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: var(--white);
+  padding: 2px;
+}
+.brand-badge span {
+  font-family: 'Manrope', sans-serif;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  color: var(--yellow);
+}
+h1 {
+  font-family: 'Manrope', sans-serif;
+  font-size: 24px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  margin-bottom: 8px;
+}
+.sub {
+  font-size: 13.5px;
+  color: rgba(255, 255, 255, 0.72);
+  line-height: 1.5;
+  margin-bottom: 30px;
+}
+.form-group {
+  text-align: left;
+  margin-bottom: 20px;
+}
+.form-label {
+  display: block;
+  font-family: 'Manrope', sans-serif;
+  font-size: 13px;
+  font-weight: 700;
+  margin-bottom: 8px;
+  color: rgba(255, 255, 255, 0.9);
+}
+.input-wrap {
+  position: relative;
+}
+input[type="password"],
+input[type="text"] {
+  width: 100%;
+  padding: 14px 44px 14px 16px;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1.5px solid rgba(255, 255, 255, 0.20);
+  color: var(--white);
+  font-family: 'Inter', sans-serif;
+  font-size: 15px;
+  outline: none;
+  transition: all .2s var(--ease);
+}
+input:focus {
+  border-color: var(--yellow);
+  box-shadow: 0 0 0 3px rgba(255, 201, 40, 0.22);
+  background: rgba(255, 255, 255, 0.12);
+}
+.toggle-btn {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  color: rgba(255, 255, 255, 0.6);
+  cursor: pointer;
+  padding: 4px;
+  display: flex;
+}
+.toggle-btn:hover { color: var(--white); }
+.error-box {
+  background: rgba(229, 57, 53, 0.15);
+  border: 1px solid rgba(229, 57, 53, 0.35);
+  color: #FF8A80;
+  padding: 12px 14px;
+  border-radius: 8px;
+  font-size: 13px;
+  line-height: 1.45;
+  margin-bottom: 20px;
+  display: none;
+  text-align: left;
+}
+.btn-submit {
+  width: 100%;
+  padding: 15px 24px;
+  border-radius: 999px;
+  background: var(--yellow);
+  color: var(--navy);
+  border: none;
+  font-family: 'Manrope', sans-serif;
+  font-size: 14px;
+  font-weight: 800;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: transform .2s var(--ease), box-shadow .2s var(--ease);
+}
+.btn-submit:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 24px rgba(255, 201, 40, 0.35);
+}
+.btn-submit:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+.footer-note {
+  margin-top: 24px;
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.45);
+  line-height: 1.5;
+}
+</style>
+</head>
+<body>
+<div class="bg-glow" aria-hidden="true"></div>
+
+<div class="login-card">
+  <div class="brand-badge">
+    <img src="/public/images/mmc-grant/brand/mmc-logo.png" alt="" width="24" height="24" aria-hidden="true" />
+    <span>My Mentor Circle</span>
+  </div>
+
+  <h1>Admin Portal</h1>
+  <p class="sub">MMC Career Readiness Grant™ 2027–28<br>Secure Leads &amp; Analytics Dashboard</p>
+
+  <div class="error-box" id="errorBox" role="alert"></div>
+
+  <form id="loginForm" autocomplete="off">
+    <div class="form-group">
+      <label for="adminPass" class="form-label">Admin Security Password</label>
+      <div class="input-wrap">
+        <input type="password" id="adminPass" name="password" placeholder="Enter administrative password" required autofocus />
+        <button type="button" class="toggle-btn" id="togglePass" aria-label="Toggle password visibility">
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+        </button>
+      </div>
+    </div>
+
+    <button type="submit" class="btn-submit" id="submitBtn">
+      <span>Access Admin Portal</span>
+    </button>
+  </form>
+
+  <p class="footer-note">
+    Protected administrative gateway. Maximum 5 attempts per 15 minutes before IP lockout. Active sessions valid for 24 hours.
+  </p>
+</div>
+
+<script>
+(function() {
+  const form = document.getElementById('loginForm');
+  const passInp = document.getElementById('adminPass');
+  const toggleBtn = document.getElementById('togglePass');
+  const submitBtn = document.getElementById('submitBtn');
+  const errorBox = document.getElementById('errorBox');
+
+  toggleBtn.addEventListener('click', () => {
+    const isPass = passInp.type === 'password';
+    passInp.type = isPass ? 'text' : 'password';
+  });
+
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const password = passInp.value;
+    if (!password) return;
+
+    submitBtn.disabled = true;
+    submitBtn.querySelector('span').textContent = 'Authenticating...';
+    errorBox.style.display = 'none';
+
+    try {
+      const res = await fetch('/api/admin/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ password })
+      });
+
+      const data = await res.json();
+
+      if (res.ok && data.success) {
+        submitBtn.querySelector('span').textContent = 'Access Granted!';
+        window.location.href = '/admin';
+      } else {
+        errorBox.textContent = data.message || 'Authentication failed. Please try again.';
+        errorBox.style.display = 'block';
+        passInp.value = '';
+        passInp.focus();
+      }
+    } catch (err) {
+      errorBox.textContent = 'Server connection error. Please verify backend is running.';
+      errorBox.style.display = 'block';
+    } finally {
+      submitBtn.disabled = false;
+      if (submitBtn.querySelector('span').textContent !== 'Access Granted!') {
+        submitBtn.querySelector('span').textContent = 'Access Admin Portal';
+      }
+    }
+  });
+})();
+</script>
+</body>
+</html>

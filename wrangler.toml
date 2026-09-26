@@ -1,0 +1,12 @@
+# Cloudflare Pages / Workers Configuration
+name = "event-page"
+compatibility_date = "2024-09-23"
+compatibility_flags = ["nodejs_compat"]
+pages_build_output_dir = "."
+
+# Primary Cloudflare D1 Database Binding
+[[d1_databases]]
+binding = "DB"
+database_name = "a63cfb65-eb51-4ade-86f7-0154c874fb17"
+database_id = "a63cfb65-eb51-4ade-86f7-0154c874fb17"
+migrations_dir = "migrations"

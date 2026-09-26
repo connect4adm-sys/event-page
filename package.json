@@ -1,0 +1,24 @@
+{
+  "name": "mmc-career-readiness-grant",
+  "version": "1.0.0",
+  "description": "MMC Career Readiness Grant™ 2027–28 Landing Page & Lead Infrastructure",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "test": "node test.js",
+    "pages:dev": "wrangler pages dev .",
+    "d1:migrate:local": "wrangler d1 migrations apply a63cfb65-eb51-4ade-86f7-0154c874fb17 --local",
+    "d1:migrate:remote": "wrangler d1 migrations apply a63cfb65-eb51-4ade-86f7-0154c874fb17 --remote"
+  },
+  "keywords": [
+    "mmc",
+    "career-readiness-grant",
+    "lead-capture"
+  ],
+  "author": "My Mentor Circle",
+  "license": "UNLICENSED",
+  "private": true,
+  "engines": {
+    "node": ">=22.0.0"
+  }
+}

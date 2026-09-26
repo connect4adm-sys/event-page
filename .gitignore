@@ -1,0 +1,27 @@
+# Environment and Secrets
+.env
+.env.local
+.env.production
+
+# Database storage
+data/*.db
+data/*.db-wal
+data/*.db-shm
+data/*.sqlite
+
+# Dependencies
+node_modules/
+package-lock.json
+
+# Logs and scratch files
+*.log
+scratch*
+npm-debug.log*
+
+# Wrangler and Cloudflare Local State
+.wrangler/
+
+# OS specific
+.DS_Store
+Thumbs.db
+
