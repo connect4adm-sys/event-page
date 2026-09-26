@@ -97,8 +97,8 @@ export async function verifyAdminSession(request, env) {
 
   try {
     const session = await env.DB.prepare(
-      'SELECT * FROM admin_sessions WHERE token = ? AND expires_at > datetime("now")'
-    ).bind(token).first();
+      'SELECT * FROM admin_sessions WHERE token = ? AND expires_at > ?'
+    ).bind(token, new Date().toISOString()).first();
     return session || null;
   } catch (err) {
     console.error('Session verify error:', err);
@@ -364,14 +364,22 @@ export async function listLeadsD1(env, {
   const whereSql = whereClauses.length > 0 ? `WHERE ${whereClauses.join(' AND ')}` : '';
   const orderDir = sortOrder.toUpperCase() === 'ASC' ? 'ASC' : 'DESC';
 
-  const countQuery = `SELECT COUNT(*) as total FROM leads ${whereSql}`;
-  const countRow = await env.DB.prepare(countQuery).bind(...params).first();
-  const total = countRow ? countRow.total : 0;
+  const countStmt = env.DB.prepare(`SELECT COUNT(*) as total FROM leads ${whereSql}`).bind(...params);
+  const dataStmt = env.DB.prepare(`SELECT * FROM leads ${whereSql} ORDER BY created_at ${orderDir} LIMIT ? OFFSET ?`).bind(...params, limit, offset);
 
-  const dataQuery = `SELECT * FROM leads ${whereSql} ORDER BY created_at ${orderDir} LIMIT ? OFFSET ?`;
-  const dataStmt = env.DB.prepare(dataQuery).bind(...params, limit, offset);
-  const dataResult = await dataStmt.all();
-  const leads = dataResult.results || [];
+  let total = 0;
+  let leads = [];
+
+  if (typeof env.DB.batch === 'function') {
+    const [countRes, dataRes] = await env.DB.batch([countStmt, dataStmt]);
+    total = (countRes?.results && countRes.results[0]?.total) || 0;
+    leads = dataRes?.results || [];
+  } else {
+    const countRow = await countStmt.first();
+    total = countRow ? countRow.total : 0;
+    const dataResult = await dataStmt.all();
+    leads = dataResult.results || [];
+  }
 
   return {
     total,
@@ -387,55 +395,69 @@ export async function getDashboardSummaryD1(env, dateRangeDays = 30) {
   const rangeStart = new Date(Date.now() - dateRangeDays * 24 * 60 * 60 * 1000).toISOString();
   const trendStart = new Date(Date.now() - 14 * 24 * 60 * 60 * 1000).toISOString();
 
-  const [
-    totalRow,
-    todayRow,
-    rangeRow,
-    dupRow,
-    gsheetRows,
-    crmRows,
-    roleRows,
-    statusRows,
-    attributionRows,
-    campaignRows,
-    trendRows
-  ] = await Promise.all([
-    env.DB.prepare('SELECT COUNT(*) as count FROM leads').first(),
-    env.DB.prepare('SELECT COUNT(*) as count FROM leads WHERE created_at >= ?').bind(todayStart).first(),
-    env.DB.prepare('SELECT COUNT(*) as count FROM leads WHERE created_at >= ?').bind(rangeStart).first(),
-    env.DB.prepare('SELECT COUNT(*) as count FROM leads WHERE is_duplicate_suspect = 1').first(),
-    env.DB.prepare('SELECT google_sheet_sync_status as status, COUNT(*) as count FROM leads GROUP BY google_sheet_sync_status').all(),
-    env.DB.prepare('SELECT crm_sync_status as status, COUNT(*) as count FROM leads GROUP BY crm_sync_status').all(),
-    env.DB.prepare('SELECT school_role, COUNT(*) as count FROM leads GROUP BY school_role ORDER BY count DESC').all(),
-    env.DB.prepare('SELECT lead_status, COUNT(*) as count FROM leads GROUP BY lead_status ORDER BY count DESC').all(),
-    env.DB.prepare('SELECT lead_id, utm_source, utm_medium, utm_campaign, referrer_url, fbclid FROM leads').all(),
-    env.DB.prepare('SELECT COALESCE(utm_campaign, "No Campaign Specified") as campaign, COUNT(*) as count FROM leads GROUP BY campaign ORDER BY count DESC LIMIT 10').all(),
-    env.DB.prepare('SELECT SUBSTR(created_at, 1, 10) as day, COUNT(*) as count FROM leads WHERE created_at >= ? GROUP BY day ORDER BY day ASC').bind(trendStart).all()
-  ]);
+  // Optimized single-round-trip batch execution
+  const stmts = [
+    // 0: Metrics summary in a single indexed scan
+    env.DB.prepare(`
+      SELECT 
+        COUNT(*) as total,
+        COALESCE(SUM(CASE WHEN created_at >= ? THEN 1 ELSE 0 END), 0) as today,
+        COALESCE(SUM(CASE WHEN created_at >= ? THEN 1 ELSE 0 END), 0) as in_range,
+        COALESCE(SUM(CASE WHEN is_duplicate_suspect = 1 THEN 1 ELSE 0 END), 0) as duplicates
+      FROM leads
+    `).bind(todayStart, rangeStart),
 
-  const sourceCounts = {};
-  (attributionRows.results || []).forEach(lead => {
-    const channel = classifyLeadSource(lead);
-    sourceCounts[channel] = (sourceCounts[channel] || 0) + 1;
-  });
+    // 1: Role Breakdown
+    env.DB.prepare('SELECT school_role, COUNT(*) as count FROM leads GROUP BY school_role ORDER BY count DESC'),
 
-  const sourceBreakdown = Object.entries(sourceCounts)
-    .map(([source, count]) => ({ source, count }))
-    .sort((a, b) => b.count - a.count);
+    // 2: Status Breakdown
+    env.DB.prepare('SELECT lead_status, COUNT(*) as count FROM leads GROUP BY lead_status ORDER BY count DESC'),
+
+    // 3: Source Breakdown (direct SQL grouping instead of full table scan)
+    env.DB.prepare(`SELECT COALESCE(NULLIF(utm_source, ''), 'Direct') as source, COUNT(*) as count FROM leads GROUP BY source ORDER BY count DESC`),
+
+    // 4: Campaign Breakdown (single quotes for SQL string literals)
+    env.DB.prepare(`SELECT COALESCE(NULLIF(utm_campaign, ''), 'No Campaign Specified') as campaign, COUNT(*) as count FROM leads GROUP BY campaign ORDER BY count DESC LIMIT 10`),
+
+    // 5: Submission Trend
+    env.DB.prepare('SELECT SUBSTR(created_at, 1, 10) as day, COUNT(*) as count FROM leads WHERE created_at >= ? GROUP BY day ORDER BY day ASC').bind(trendStart),
+
+    // 6: Google Sheet Sync Statuses
+    env.DB.prepare('SELECT google_sheet_sync_status as status, COUNT(*) as count FROM leads GROUP BY google_sheet_sync_status'),
+
+    // 7: CRM Sync Statuses
+    env.DB.prepare('SELECT crm_sync_status as status, COUNT(*) as count FROM leads GROUP BY crm_sync_status')
+  ];
+
+  let results;
+  if (typeof env.DB.batch === 'function') {
+    results = await env.DB.batch(stmts);
+  } else {
+    results = await Promise.all(stmts.map(s => s.all()));
+  }
+
+  const countsRow = (results[0]?.results && results[0].results[0]) || (results[0] && results[0][0]) || {};
+  const roleRows = results[1]?.results || results[1] || [];
+  const statusRows = results[2]?.results || results[2] || [];
+  const sourceRows = results[3]?.results || results[3] || [];
+  const campaignRows = results[4]?.results || results[4] || [];
+  const trendRows = results[5]?.results || results[5] || [];
+  const gsheetRows = results[6]?.results || results[6] || [];
+  const crmRows = results[7]?.results || results[7] || [];
 
   return {
-    totalLeads: totalRow ? totalRow.count : 0,
-    leadsToday: todayRow ? todayRow.count : 0,
-    leadsInRange: rangeRow ? rangeRow.count : 0,
-    duplicateSuspects: dupRow ? dupRow.count : 0,
+    totalLeads: countsRow.total || 0,
+    leadsToday: countsRow.today || 0,
+    leadsInRange: countsRow.in_range || 0,
+    duplicateSuspects: countsRow.duplicates || 0,
     dateRangeDays,
-    roleBreakdown: roleRows.results || [],
-    statusBreakdown: statusRows.results || [],
-    sourceBreakdown,
-    campaignBreakdown: campaignRows.results || [],
-    submissionTrend: trendRows.results || [],
-    gsheetStats: gsheetRows.results || [],
-    crmStats: crmRows.results || [],
+    roleBreakdown: roleRows,
+    statusBreakdown: statusRows,
+    sourceBreakdown: sourceRows,
+    campaignBreakdown: campaignRows,
+    submissionTrend: trendRows,
+    gsheetStats: gsheetRows,
+    crmStats: crmRows,
     integrations: {
       google_sheets: {
         configured: Boolean((env && env.GOOGLE_SHEETS_WEBHOOK_URL && env.GOOGLE_SHEETS_WEBHOOK_URL.trim()) || DEFAULT_SHEETS_WEBHOOK_URL),

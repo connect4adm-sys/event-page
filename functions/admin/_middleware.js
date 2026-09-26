@@ -4,9 +4,11 @@ export async function onRequest(context) {
   const { request, env, next } = context;
   const url = new URL(request.url);
 
-  // Allow /admin/login and static assets (css, js, images, icons) without auth
+  const isLoginPage = url.pathname === '/admin/login' || url.pathname === '/admin/login.html';
+
+  // Allow login page and static assets without auth
   if (
-    url.pathname === '/admin/login' ||
+    isLoginPage ||
     url.pathname.endsWith('.css') ||
     url.pathname.endsWith('.js') ||
     url.pathname.endsWith('.png') ||
@@ -16,16 +18,25 @@ export async function onRequest(context) {
     url.pathname.endsWith('.svg') ||
     url.pathname.endsWith('.ico')
   ) {
-    if (url.pathname === '/admin/login') {
-      const session = await verifyAdminSession(request, env);
-      if (session) {
-        return Response.redirect(new URL('/admin', request.url).toString(), 302);
+    if (isLoginPage) {
+      const cookies = request.headers.get('Cookie') || '';
+      if (cookies.includes('mmc_admin_session=')) {
+        const session = await verifyAdminSession(request, env);
+        if (session) {
+          return Response.redirect(new URL('/admin', request.url).toString(), 302);
+        }
       }
     }
     return next();
   }
 
-  // Check admin session
+  // Fast cookie check before querying D1: if cookie absent, redirect instantly
+  const cookieHeader = request.headers.get('Cookie') || '';
+  if (!cookieHeader.includes('mmc_admin_session=')) {
+    return Response.redirect(new URL('/admin/login', request.url).toString(), 302);
+  }
+
+  // Validate active admin session in D1
   const session = await verifyAdminSession(request, env);
   if (!session) {
     return Response.redirect(new URL('/admin/login', request.url).toString(), 302);

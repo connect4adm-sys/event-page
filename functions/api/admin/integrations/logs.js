@@ -13,12 +13,23 @@ export async function onRequestGet(context) {
   }
 
   try {
-    const countRow = await env.DB.prepare('SELECT COUNT(*) as total FROM leads').first();
-    const totalLeads = countRow ? countRow.total : 0;
-
-    const logsResult = await env.DB.prepare(
-      'SELECT id, lead_id, target, status, duration_ms, attempted_at, error_message FROM sync_logs ORDER BY id DESC LIMIT 50'
-    ).all();
+    let totalLeads = 0;
+    let logs = [];
+    if (typeof env.DB.batch === 'function') {
+      const [countRes, logsRes] = await env.DB.batch([
+        env.DB.prepare('SELECT COUNT(*) as total FROM leads'),
+        env.DB.prepare('SELECT id, lead_id, target, status, duration_ms, attempted_at, error_message FROM sync_logs ORDER BY id DESC LIMIT 50')
+      ]);
+      totalLeads = (countRes.results && countRes.results[0]) ? countRes.results[0].total : 0;
+      logs = logsRes.results || [];
+    } else {
+      const countRow = await env.DB.prepare('SELECT COUNT(*) as total FROM leads').first();
+      totalLeads = countRow ? countRow.total : 0;
+      const logsResult = await env.DB.prepare(
+        'SELECT id, lead_id, target, status, duration_ms, attempted_at, error_message FROM sync_logs ORDER BY id DESC LIMIT 50'
+      ).all();
+      logs = logsResult.results || [];
+    }
 
     return json({
       success: true,

@@ -1,5 +1,4 @@
 import { json, getClientIp, syncToGoogleSheets, syncToLeadsZone, DEFAULT_SHEETS_WEBHOOK_URL, DEFAULT_CRM_API_URL } from '../_shared.js';
-import crypto from 'node:crypto';
 
 const ALLOWED_ROLES = [
   'Principal',
@@ -79,7 +78,9 @@ export async function onRequestPost(context) {
   const clientIp = getClientIp(request);
   const now = new Date();
   const dateStr = now.toISOString().slice(0, 10).replace(/-/g, '');
-  const randSuffix = crypto.randomBytes(3).toString('hex');
+  const randArr = new Uint8Array(3);
+  crypto.getRandomValues(randArr);
+  const randSuffix = Array.from(randArr, b => b.toString(16).padStart(2, '0')).join('');
   const leadId = `lead_${dateStr}_${randSuffix}`;
 
   const idempotencyKey = typeof body.idempotency_key === 'string' && body.idempotency_key.trim()
@@ -173,7 +174,7 @@ export async function onRequestPost(context) {
     leadRecord.created_at, leadRecord.updated_at
   ).run();
 
-  // Execute downstream syncs (Google Sheets + LeadsZone CRM)
+  // Execute downstream syncs (Google Sheets + LeadsZone CRM) asynchronously in background
   const syncPromise = Promise.allSettled([
     syncToGoogleSheets(leadRecord, env),
     syncToLeadsZone(leadRecord, env)
@@ -183,12 +184,7 @@ export async function onRequestPost(context) {
     context.waitUntil(syncPromise);
   }
 
-  // Await with race timeout so D1 database status is updated to SYNCED immediately before response
-  await Promise.race([
-    syncPromise,
-    new Promise(r => setTimeout(r, 2000))
-  ]);
-
+  // Return immediately without waiting for third-party HTTP webhooks
   return json({
     success: true,
     lead_id: leadId,

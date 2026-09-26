@@ -485,6 +485,24 @@ tr:hover td {
   color: var(--navy);
   word-break: break-word;
 }
+.table-spinner {
+  display: inline-block;
+  width: 16px;
+  height: 16px;
+  border: 2.5px solid rgba(6, 47, 82, 0.18);
+  border-top-color: var(--blue);
+  border-radius: 50%;
+  animation: adminSpin 0.75s linear infinite;
+  vertical-align: middle;
+  margin-right: 8px;
+}
+@keyframes adminSpin {
+  to { transform: rotate(360deg); }
+}
+.btn-loading {
+  opacity: 0.65;
+  pointer-events: none;
+}
 </style>
 </head>
 <body>
@@ -870,10 +888,17 @@ tr:hover td {
   });
 
   // Refresh Button
-  document.getElementById('refreshBtn').addEventListener('click', () => {
-    loadOverview();
-    loadLeads();
-    loadIntegrations();
+  document.getElementById('refreshBtn').addEventListener('click', async () => {
+    const btn = document.getElementById('refreshBtn');
+    btn.classList.add('btn-loading');
+    const origText = btn.innerHTML;
+    btn.innerHTML = '<span class="table-spinner" style="border-top-color:#fff;border-color:rgba(255,255,255,0.3);width:12px;height:12px;"></span> Refreshing...';
+    try {
+      await Promise.allSettled([loadOverview(), loadLeads(), loadIntegrations()]);
+    } finally {
+      btn.classList.remove('btn-loading');
+      btn.innerHTML = origText;
+    }
   });
 
   // Load Overview Data
@@ -881,74 +906,98 @@ tr:hover td {
     try {
       const res = await fetch('/api/admin/analytics/summary');
       if (res.status === 401) { window.location.href = '/admin/login'; return; }
+      if (!res.ok) {
+        console.warn('Analytics summary returned HTTP', res.status);
+        return;
+      }
       const data = await res.json();
+      if (!data) return;
 
-      document.getElementById('metricTotal').textContent = data.totalLeads.toLocaleString();
-      document.getElementById('metricToday').textContent = data.leadsToday.toLocaleString();
-      document.getElementById('metricRange').textContent = data.leadsInRange.toLocaleString();
-      document.getElementById('metricDuplicates').textContent = data.duplicateSuspects.toLocaleString();
+      const setVal = (id, val) => {
+        const el = document.getElementById(id);
+        if (el) el.textContent = typeof val === 'number' ? val.toLocaleString() : (val || 0);
+      };
+
+      setVal('metricTotal', data.totalLeads);
+      setVal('metricToday', data.leadsToday);
+      setVal('metricRange', data.leadsInRange);
+      setVal('metricDuplicates', data.duplicateSuspects);
 
       // Role Breakdown
       const roleList = document.getElementById('roleBreakdownList');
-      roleList.innerHTML = (data.roleBreakdown || []).map(r => `
-        <div class="item-row">
-          <span class="name">${r.school_role}</span>
-          <span class="count-badge">${r.count}</span>
-        </div>
-      `).join('') || '<p class="desc">No leads recorded yet.</p>';
+      if (roleList) {
+        roleList.innerHTML = (data.roleBreakdown || []).map(r => `
+          <div class="item-row">
+            <span class="name">${escapeHtml(r.school_role || 'Unspecified')}</span>
+            <span class="count-badge">${(r.count ?? 0).toLocaleString()}</span>
+          </div>
+        `).join('') || '<p class="desc">No leads recorded yet.</p>';
+      }
 
       // Source Breakdown
       const sourceList = document.getElementById('sourceBreakdownList');
-      sourceList.innerHTML = (data.sourceBreakdown || []).map(s => `
-        <div class="item-row">
-          <span class="name">${s.source}</span>
-          <span class="count-badge">${s.count}</span>
-        </div>
-      `).join('') || '<p class="desc">No leads recorded yet.</p>';
+      if (sourceList) {
+        sourceList.innerHTML = (data.sourceBreakdown || []).map(s => `
+          <div class="item-row">
+            <span class="name">${escapeHtml(s.source || 'Direct')}</span>
+            <span class="count-badge">${(s.count ?? 0).toLocaleString()}</span>
+          </div>
+        `).join('') || '<p class="desc">No leads recorded yet.</p>';
+      }
 
       // Campaign Breakdown
       const campList = document.getElementById('campaignBreakdownList');
-      campList.innerHTML = (data.campaignBreakdown || []).map(c => `
-        <div class="item-row">
-          <span class="name">${c.campaign}</span>
-          <span class="count-badge">${c.count}</span>
-        </div>
-      `).join('') || '<p class="desc">No campaigns recorded yet.</p>';
+      if (campList) {
+        campList.innerHTML = (data.campaignBreakdown || []).map(c => `
+          <div class="item-row">
+            <span class="name">${escapeHtml(c.campaign || 'Direct')}</span>
+            <span class="count-badge">${(c.count ?? 0).toLocaleString()}</span>
+          </div>
+        `).join('') || '<p class="desc">No campaigns recorded yet.</p>';
+      }
 
       // Status Breakdown
       const statusList = document.getElementById('statusBreakdownList');
-      statusList.innerHTML = (data.statusBreakdown || []).map(s => `
-        <div class="item-row">
-          <span class="name">${s.lead_status}</span>
-          <span class="count-badge">${s.count}</span>
-        </div>
-      `).join('') || '<p class="desc">No statuses recorded yet.</p>';
+      if (statusList) {
+        statusList.innerHTML = (data.statusBreakdown || []).map(s => `
+          <div class="item-row">
+            <span class="name">${escapeHtml(s.lead_status || 'NEW')}</span>
+            <span class="count-badge">${(s.count ?? 0).toLocaleString()}</span>
+          </div>
+        `).join('') || '<p class="desc">No statuses recorded yet.</p>';
+      }
 
       // Traffic tab sync
       const trafficChannels = document.getElementById('trafficChannelsList');
-      if (trafficChannels) trafficChannels.innerHTML = sourceList.innerHTML;
+      if (trafficChannels && sourceList) trafficChannels.innerHTML = sourceList.innerHTML;
       const trafficCamps = document.getElementById('trafficCampaignsList');
-      if (trafficCamps) trafficCamps.innerHTML = campList.innerHTML;
+      if (trafficCamps && campList) trafficCamps.innerHTML = campList.innerHTML;
 
       // Integration Badges
       if (data.integrations) {
         const gs = data.integrations.google_sheets;
         const gsConfigured = typeof gs === 'boolean' ? gs : (gs && gs.configured);
         const gsMethod = (gs && gs.method) ? ` (${gs.method})` : '';
-        document.getElementById('sheetsStatusVal').innerHTML = gsConfigured
-          ? `<span class="badge badge-synced">CONFIGURED${gsMethod}</span>`
-          : `<span class="badge badge-unconfigured">NOT CONFIGURED</span>`;
+        const gsEl = document.getElementById('sheetsStatusVal');
+        if (gsEl) {
+          gsEl.innerHTML = gsConfigured
+            ? `<span class="badge badge-synced">CONFIGURED${gsMethod}</span>`
+            : `<span class="badge badge-unconfigured">NOT CONFIGURED</span>`;
+        }
 
         const crm = data.integrations.crm;
         const crmConfigured = typeof crm === 'boolean' ? crm : (crm && crm.configured);
         const crmProvider = (crm && crm.provider) ? ` (${crm.provider})` : '';
-        document.getElementById('crmStatusVal').innerHTML = crmConfigured
-          ? `<span class="badge badge-synced">CONFIGURED${crmProvider}</span>`
-          : `<span class="badge badge-unconfigured">NOT CONFIGURED</span>`;
+        const crmEl = document.getElementById('crmStatusVal');
+        if (crmEl) {
+          crmEl.innerHTML = crmConfigured
+            ? `<span class="badge badge-synced">CONFIGURED${crmProvider}</span>`
+            : `<span class="badge badge-unconfigured">NOT CONFIGURED</span>`;
+        }
       }
 
       if (data.totalLeads !== undefined && document.getElementById('dbRecordsVal')) {
-        document.getElementById('dbRecordsVal').textContent = data.totalLeads.toLocaleString();
+        document.getElementById('dbRecordsVal').textContent = (data.totalLeads ?? 0).toLocaleString();
       }
     } catch (err) {
       console.error('Failed to load overview:', err);
@@ -957,11 +1006,16 @@ tr:hover td {
 
   // Load Leads Table
   async function loadLeads() {
-    const search = document.getElementById('searchInput').value;
-    const role = document.getElementById('roleFilter').value;
-    const status = document.getElementById('statusFilter').value;
-    const gsheetStatus = document.getElementById('gsheetFilter').value;
-    const crmStatus = document.getElementById('crmFilter').value;
+    const tbody = document.getElementById('leadsTableBody');
+    if (tbody) {
+      tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;padding:32px;color:var(--muted);"><span class="table-spinner"></span>Loading leads...</td></tr>';
+    }
+
+    const search = document.getElementById('searchInput')?.value || '';
+    const role = document.getElementById('roleFilter')?.value || '';
+    const status = document.getElementById('statusFilter')?.value || '';
+    const gsheetStatus = document.getElementById('gsheetFilter')?.value || '';
+    const crmStatus = document.getElementById('crmFilter')?.value || '';
 
     const params = new URLSearchParams({
       search,
@@ -976,39 +1030,48 @@ tr:hover td {
     try {
       const res = await fetch(`/api/admin/leads?${params}`);
       if (res.status === 401) { window.location.href = '/admin/login'; return; }
+      if (!res.ok) {
+        throw new Error(`HTTP ${res.status}`);
+      }
       const data = await res.json();
 
-      const tbody = document.getElementById('leadsTableBody');
-      if (!data.leads || data.leads.length === 0) {
+      if (!tbody) return;
+      const leads = data.leads || [];
+      const total = data.total || 0;
+
+      if (leads.length === 0) {
         tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;padding:32px;color:var(--muted);">No matching leads found in the database.</td></tr>';
-        document.getElementById('pageInfo').textContent = 'Showing 0 of 0 leads';
-        document.getElementById('prevPageBtn').disabled = true;
-        document.getElementById('nextPageBtn').disabled = true;
+        const pageInfo = document.getElementById('pageInfo');
+        if (pageInfo) pageInfo.textContent = 'Showing 0 of 0 leads';
+        const prevBtn = document.getElementById('prevPageBtn');
+        if (prevBtn) prevBtn.disabled = true;
+        const nextBtn = document.getElementById('nextPageBtn');
+        if (nextBtn) nextBtn.disabled = true;
         return;
       }
 
-      tbody.innerHTML = data.leads.map(lead => {
-        const dateStr = new Date(lead.created_at).toLocaleString('en-IN', { dateStyle: 'short', timeStyle: 'short' });
+      tbody.innerHTML = leads.map(lead => {
+        const dateStr = lead.created_at ? new Date(lead.created_at).toLocaleString('en-IN', { dateStyle: 'short', timeStyle: 'short' }) : '-';
         const gsheetBadge = getSyncBadge(lead.google_sheet_sync_status);
         const crmBadge = getSyncBadge(lead.crm_sync_status);
 
         return `
           <tr>
             <td>
-              <button type="button" class="lead-link" onclick="window.showLeadDetails('${lead.lead_id}')">${lead.lead_id}</button><br>
+              <button type="button" class="lead-link" onclick="window.showLeadDetails('${lead.lead_id}')">${escapeHtml(lead.lead_id)}</button><br>
               <small style="color:var(--muted);">${dateStr}</small>
             </td>
             <td>
-              <b>${escapeHtml(lead.full_name)}</b><br>
-              <small style="color:var(--blue);">${escapeHtml(lead.school_role)}${lead.school_role_other ? ' (' + escapeHtml(lead.school_role_other) + ')' : ''}</small>
+              <b>${escapeHtml(lead.full_name || '')}</b><br>
+              <small style="color:var(--blue);">${escapeHtml(lead.school_role || '')}${lead.school_role_other ? ' (' + escapeHtml(lead.school_role_other) + ')' : ''}</small>
             </td>
             <td>
-              <span>${escapeHtml(lead.phone)}</span><br>
+              <span>${escapeHtml(lead.phone || '')}</span><br>
               <small style="color:var(--muted);">${lead.email ? escapeHtml(lead.email) : '<em>No email</em>'}</small>
             </td>
             <td>
-              <b>${escapeHtml(lead.school_name)}</b><br>
-              <small style="color:var(--muted);">${escapeHtml(lead.school_city_district)}</small>
+              <b>${escapeHtml(lead.school_name || '')}</b><br>
+              <small style="color:var(--muted);">${escapeHtml(lead.school_city_district || '')}</small>
             </td>
             <td>
               <span>${lead.utm_source ? escapeHtml(lead.utm_source) : 'Direct'}</span><br>
@@ -1040,12 +1103,18 @@ tr:hover td {
       }).join('');
 
       const start = currentOffset + 1;
-      const end = Math.min(currentOffset + data.leads.length, data.total);
-      document.getElementById('pageInfo').textContent = `Showing ${start}–${end} of ${data.total} leads`;
-      document.getElementById('prevPageBtn').disabled = currentOffset === 0;
-      document.getElementById('nextPageBtn').disabled = end >= data.total;
+      const end = Math.min(currentOffset + leads.length, total);
+      const pageInfo = document.getElementById('pageInfo');
+      if (pageInfo) pageInfo.textContent = `Showing ${start}–${end} of ${total} leads`;
+      const prevBtn = document.getElementById('prevPageBtn');
+      if (prevBtn) prevBtn.disabled = currentOffset === 0;
+      const nextBtn = document.getElementById('nextPageBtn');
+      if (nextBtn) nextBtn.disabled = end >= total;
     } catch (err) {
       console.error('Failed to load leads:', err);
+      if (tbody) {
+        tbody.innerHTML = `<tr><td colspan="9" style="text-align:center;padding:32px;color:var(--danger);">Failed to load leads data. <button onclick="window.loadLeads()" style="margin-left:8px;padding:3px 10px;font-size:11px;cursor:pointer;border-radius:4px;border:1px solid var(--line);background:#fff;">Retry</button></td></tr>`;
+      }
     }
   }
 
@@ -1175,12 +1244,23 @@ tr:hover td {
     loadLeads();
   });
 
-  // Filter Listeners
-  document.getElementById('searchInput').addEventListener('input', () => { currentOffset = 0; loadLeads(); });
-  document.getElementById('roleFilter').addEventListener('change', () => { currentOffset = 0; loadLeads(); });
-  document.getElementById('statusFilter').addEventListener('change', () => { currentOffset = 0; loadLeads(); });
-  document.getElementById('gsheetFilter').addEventListener('change', () => { currentOffset = 0; loadLeads(); });
-  document.getElementById('crmFilter').addEventListener('change', () => { currentOffset = 0; loadLeads(); });
+  // Filter Listeners with 300ms Debounce
+  let searchDebounceTimer = null;
+  document.getElementById('searchInput')?.addEventListener('input', () => {
+    clearTimeout(searchDebounceTimer);
+    searchDebounceTimer = setTimeout(() => {
+      currentOffset = 0;
+      loadLeads();
+    }, 300);
+  });
+  document.getElementById('roleFilter')?.addEventListener('change', () => { currentOffset = 0; loadLeads(); });
+  document.getElementById('statusFilter')?.addEventListener('change', () => { currentOffset = 0; loadLeads(); });
+  document.getElementById('gsheetFilter')?.addEventListener('change', () => { currentOffset = 0; loadLeads(); });
+  document.getElementById('crmFilter')?.addEventListener('change', () => { currentOffset = 0; loadLeads(); });
+
+  window.loadLeads = loadLeads;
+  window.loadOverview = loadOverview;
+  window.loadIntegrations = loadIntegrations;
 
   // Load Geography
   async function loadGeography() {

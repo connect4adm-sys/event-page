@@ -29,7 +29,20 @@ export async function onRequestPost(context) {
   }
 
   // Generate session token
-  const token = crypto.randomBytes(32).toString('hex');
+  let token;
+  try {
+    if (typeof crypto !== 'undefined' && typeof crypto.randomBytes === 'function') {
+      token = crypto.randomBytes(32).toString('hex');
+    } else {
+      const bytes = new Uint8Array(32);
+      (globalThis.crypto || crypto).getRandomValues(bytes);
+      token = Array.from(bytes, b => b.toString(16).padStart(2, '0')).join('');
+    }
+  } catch {
+    const bytes = new Uint8Array(32);
+    (globalThis.crypto || crypto).getRandomValues(bytes);
+    token = Array.from(bytes, b => b.toString(16).padStart(2, '0')).join('');
+  }
   const expiresAt = new Date(Date.now() + SESSION_DURATION_MS).toISOString();
 
   try {
