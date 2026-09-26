@@ -66,6 +66,7 @@ async function postToWebhook(urlStr, data) {
       'User-Agent': 'MMC-LeadEngine/1.0'
     },
     body: JSON.stringify(data),
+    redirect: 'follow',
     signal: AbortSignal.timeout(15000)
   });
 
