@@ -858,6 +858,13 @@ tr:hover td {
 
 <script>
 (function() {
+  function escapeHtml(str) {
+    if (!str) return '';
+    return String(str).replace(/[&<>"']/g, m => ({
+      '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+    })[m]);
+  }
+
   let currentOffset = 0;
   const PAGE_LIMIT = 20;
 
@@ -1133,13 +1140,6 @@ tr:hover td {
     return '<span class="badge badge-unconfigured">NOT CONFIGURED</span>';
   }
 
-  function escapeHtml(str) {
-    if (!str) return '';
-    return str.replace(/[&<>"']/g, m => ({
-      '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
-    })[m]);
-  }
-
   // Lead Details Modal Handler
   window.showLeadDetails = async function(leadId) {
     try {
@@ -1353,7 +1353,7 @@ tr:hover td {
             <td>${statusBadge}</td>
             <td>${log.duration_ms ? log.duration_ms + 'ms' : '-'}</td>
             <td><small style="color:var(--muted);">${dateStr}</small></td>
-            <td><small style="color:${log.status === 'FAILED' ? 'var(--danger)' : 'var(--muted)};">${escapeHtml(log.error_message || 'OK')}</small></td>
+            <td><small style="color:${log.status === 'FAILED' ? 'var(--danger)' : 'var(--muted)'};">${escapeHtml(log.error_message || 'OK')}</small></td>
           </tr>
         `;
       }).join('');
