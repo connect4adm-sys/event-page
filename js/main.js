@@ -190,9 +190,17 @@ document.getElementById('year').textContent = new Date().getFullYear();
     }
   });
 
-  // Lazy load and Intersection Observer for preview muted autoplay
+  // High-Performance On-Demand Video Preview:
+  // Prevents concurrent multi-video bandwidth choking by allowing AT MOST 1 active preview stream
+  let activePreviewVideo = null;
+  let hoverTimeout = null;
+
   const playVideo = (video) => {
     if (!video) return;
+    if (activePreviewVideo && activePreviewVideo !== video) {
+      pauseVideo(activePreviewVideo);
+    }
+    activePreviewVideo = video;
     if (video.dataset.src && !video.src) {
       video.src = video.dataset.src;
       video.load();
@@ -200,38 +208,85 @@ document.getElementById('year').textContent = new Date().getFullYear();
     video.muted = true;
     const p = video.play();
     if (p !== undefined) {
-      p.catch(() => {
-        // Autoplay rejection is handled gracefully
-      });
+      p.catch(() => {});
     }
   };
 
   const pauseVideo = (video) => {
     if (!video) return;
     video.pause();
+    if (activePreviewVideo === video) {
+      activePreviewVideo = null;
+    }
   };
 
-  const io = new IntersectionObserver((entries) => {
-    if (modalBackdrop.classList.contains('is-active')) return; // do not autoplay if modal is open
+  // 1. Desktop: Instant smooth preview on hover (with 120ms debounce to ignore fast mouse passing)
+  cards.forEach(card => {
+    const video = card.querySelector('video');
+    if (!video) return;
 
-    entries.forEach(entry => {
-      const card = entry.target;
-      const video = card.querySelector('video');
-      if (!video) return;
-
-      // Check if card is currently hidden via CSS
-      const isHidden = card.classList.contains('is-collapsed') && !isExpanded;
-      const isHiddenMobile = card.classList.contains('is-collapsed-mobile') && isMobile() && !isExpanded;
-
-      if (entry.isIntersecting && !isHidden && !isHiddenMobile) {
+    card.addEventListener('mouseenter', () => {
+      if (modalBackdrop.classList.contains('is-active')) return;
+      clearTimeout(hoverTimeout);
+      hoverTimeout = setTimeout(() => {
         playVideo(video);
-      } else {
-        pauseVideo(video);
-      }
+      }, 120);
     });
+
+    card.addEventListener('mouseleave', () => {
+      clearTimeout(hoverTimeout);
+      pauseVideo(video);
+    });
+  });
+
+  // 2. Mobile: Only preview the SINGLE card most centered in viewport, never 6-12 cards in parallel
+  const io = new IntersectionObserver((entries) => {
+    if (modalBackdrop.classList.contains('is-active')) return;
+
+    if (!isMobile()) {
+      // On desktop, pause videos when they leave the viewport completely
+      entries.forEach(entry => {
+        if (!entry.isIntersecting) {
+          const v = entry.target.querySelector('video');
+          if (v && v === activePreviewVideo) pauseVideo(v);
+        }
+      });
+      return;
+    }
+
+    const visibleCards = entries.filter(e => {
+      if (!e.isIntersecting) {
+        const v = e.target.querySelector('video');
+        if (v && v === activePreviewVideo) pauseVideo(v);
+        return false;
+      }
+      const isHidden = e.target.classList.contains('is-collapsed') && !isExpanded;
+      const isHiddenMobile = e.target.classList.contains('is-collapsed-mobile') && !isExpanded;
+      return !isHidden && !isHiddenMobile;
+    });
+
+    if (visibleCards.length > 0) {
+      const viewportCenter = window.innerHeight / 2;
+      let closestCard = visibleCards[0].target;
+      let minDistance = Infinity;
+
+      visibleCards.forEach(e => {
+        const rect = e.target.getBoundingClientRect();
+        const cardCenter = rect.top + rect.height / 2;
+        const dist = Math.abs(cardCenter - viewportCenter);
+        if (dist < minDistance) {
+          minDistance = dist;
+          closestCard = e.target;
+        }
+      });
+
+      const videoToPlay = closestCard.querySelector('video');
+      if (videoToPlay && videoToPlay !== activePreviewVideo) {
+        playVideo(videoToPlay);
+      }
+    }
   }, {
-    rootMargin: '100px 0px 100px 0px',
-    threshold: 0.15
+    threshold: 0.5
   });
 
   cards.forEach(card => io.observe(card));

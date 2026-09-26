@@ -294,6 +294,7 @@ h1,h2,h3,h4{
 .hero-bg{
   position:absolute;inset:0;
   background-image:url('../public/images/mmc-grant/hero/auditorium-assembly-hero.jpg');
+  background-image:image-set(url('../public/images/mmc-grant/hero/auditorium-assembly-hero.webp') type('image/webp'), url('../public/images/mmc-grant/hero/auditorium-assembly-hero.jpg') type('image/jpeg'));
   background-size:cover;background-position:center 55%;
   opacity:0;transform:scale(1.06);
   animation:heroBg 2.4s var(--ease) forwards;
@@ -1799,6 +1800,7 @@ body.video-modal-open {
 .final-cta .bg{
   position:absolute;inset:0;
   background-image:url('../public/images/mmc-grant/programme/school-assembly-hall-plenary.jpg');
+  background-image:image-set(url('../public/images/mmc-grant/programme/school-assembly-hall-plenary.webp') type('image/webp'), url('../public/images/mmc-grant/programme/school-assembly-hall-plenary.jpg') type('image/jpeg'));
   background-size:cover;background-position:center 50%;
 }
 .final-cta .bg::after{
