@@ -1454,7 +1454,8 @@ h1,h2,h3,h4{
   text-overflow: ellipsis;
 }
 
-/* Visibility Collapsing */
+/* Visibility Collapsing & Step Reveal */
+.short-video-card.is-hidden-card,
 .short-video-card.is-collapsed {
   display: none !important;
 }
@@ -1463,15 +1464,14 @@ h1,h2,h3,h4{
     display: none !important;
   }
 }
-.video-gallery-grid.is-expanded .short-video-card.is-collapsed,
-.video-gallery-grid.is-expanded .short-video-card.is-collapsed-mobile {
+.short-video-card.is-revealed-step {
   display: block !important;
   animation: cardFadeIn .4s var(--ease) forwards;
 }
 
 @keyframes cardFadeIn {
-  from { opacity: 0; transform: translateY(12px); }
-  to { opacity: 1; transform: translateY(0); }
+  from { opacity: 0; transform: translateY(14px) scale(0.97); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
 }
 
 /* Gallery Actions (Show More / Less) */
@@ -1523,81 +1523,89 @@ h1,h2,h3,h4{
   transform: rotate(180deg);
 }
 
-/* Breakpoints */
+/* Breakpoints: 3 Videos per row on Mobile */
 @media (max-width: 1024px) {
   .test-sec { padding: 90px 0; }
   .test-head { margin-bottom: 38px; }
   .video-gallery-grid {
-    grid-template-columns: repeat(3, 1fr);
-    gap: 14px;
+    grid-template-columns: repeat(3, 1fr) !important;
+    gap: 12px;
   }
 }
 @media (max-width: 640px) {
-  .test-sec { padding: 70px 0; }
-  .test-head { margin-bottom: 28px; }
+  .test-sec { padding: 60px 0; }
+  .test-head { margin-bottom: 24px; }
   .video-gallery-grid {
-    grid-template-columns: repeat(2, 1fr);
-    gap: 12px;
+    grid-template-columns: repeat(3, 1fr) !important;
+    gap: 8px;
   }
   .short-video-card {
-    border-radius: 14px;
-  }
-  .card-badge {
-    top: 8px;
-    left: 8px;
-    padding: 3px 8px;
-    font-size: 10px;
-    gap: 5px;
-  }
-  .badge-pulse-dot {
-    width: 6px;
-    height: 6px;
-  }
-  .card-play-indicator {
-    width: 38px;
-    height: 38px;
-  }
-  .card-play-indicator svg {
-    width: 15px;
-    height: 15px;
-  }
-  .card-caption {
-    padding: 10px 10px;
-  }
-  .card-tag {
-    font-size: 9.5px;
-  }
-  .card-title {
-    font-size: 12px;
-    line-height: 1.32;
-  }
-  .btn-toggle-gallery {
-    font-size: 14px;
-    padding: 12px 24px;
-    width: 100%;
-    max-width: 320px;
-  }
-}
-@media (max-width: 380px) {
-  .video-gallery-grid {
-    gap: 9px;
+    border-radius: 12px;
   }
   .card-badge {
     top: 6px;
     left: 6px;
     padding: 2px 6px;
-    font-size: 9px;
+    font-size: 8.5px;
+    gap: 4px;
   }
-  .card-caption {
-    padding: 8px 8px;
-  }
-  .card-title {
-    font-size: 11px;
-    line-height: 1.25;
+  .badge-pulse-dot {
+    width: 4.5px;
+    height: 4.5px;
   }
   .card-play-indicator {
-    width: 34px;
-    height: 34px;
+    width: 30px;
+    height: 30px;
+  }
+  .card-play-indicator svg {
+    width: 12px;
+    height: 12px;
+  }
+  .card-caption {
+    padding: 6px 6px;
+    gap: 1px;
+  }
+  .card-tag {
+    font-size: 8px;
+  }
+  .card-title {
+    font-size: 10px;
+    line-height: 1.2;
+  }
+  .btn-toggle-gallery {
+    font-size: 13.5px;
+    padding: 11px 22px;
+    width: auto;
+    max-width: 100%;
+  }
+}
+@media (max-width: 380px) {
+  .video-gallery-grid {
+    grid-template-columns: repeat(3, 1fr) !important;
+    gap: 6px;
+  }
+  .card-badge {
+    top: 4px;
+    left: 4px;
+    padding: 2px 4px;
+    font-size: 7.5px;
+  }
+  .card-caption {
+    padding: 5px 4px;
+  }
+  .card-title {
+    font-size: 8.5px;
+    line-height: 1.15;
+  }
+  .card-play-indicator {
+    width: 24px;
+    height: 24px;
+  }
+  .card-play-indicator svg {
+    width: 10px;
+    height: 10px;
+  }
+}
   }
 }
 
@@ -2461,16 +2469,25 @@ body.lead-modal-open {
   position: fixed;
   bottom: 24px;
   right: 24px;
-  z-index: 990;
+  z-index: 9999;
   display: flex;
   align-items: center;
   filter: drop-shadow(0 12px 30px rgba(6, 47, 82, 0.28));
   animation: flpFloatIn .6s var(--ease) forwards;
-  transition: transform .25s var(--ease), opacity .25s var(--ease);
+  transition: transform .25s var(--ease), opacity .25s var(--ease), visibility .25s var(--ease);
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  cursor: pointer;
 }
 @keyframes flpFloatIn {
   from { opacity: 0; transform: translateY(20px) scale(0.9); }
   to { opacity: 1; transform: translateY(0) scale(1); }
+}
+.floating-lead-prompt.is-modal-active {
+  opacity: 0 !important;
+  pointer-events: none !important;
+  visibility: hidden !important;
+  transform: translateY(20px) scale(0.9) !important;
 }
 .floating-lead-prompt.is-hidden {
   opacity: 0;
@@ -2489,12 +2506,32 @@ body.lead-modal-open {
   cursor: pointer;
   text-decoration: none;
   box-shadow: 0 4px 18px rgba(0, 0, 0, 0.24);
-  transition: transform .2s var(--ease), box-shadow .2s var(--ease), border-color .2s var(--ease);
+  transition: transform .2s var(--ease), box-shadow .2s var(--ease), border-color .2s var(--ease), width .2s var(--ease), height .2s var(--ease), padding .2s var(--ease);
+  user-select: none;
 }
 .flp-card:hover {
   transform: translateY(-2px);
   border-color: var(--yellow);
   box-shadow: 0 8px 24px rgba(255, 201, 40, 0.32);
+}
+/* Collapsed FAB Mode (when dismissed, retains quick-access button without obstructing screen) */
+.floating-lead-prompt.is-collapsed-fab .flp-card {
+  padding: 10px;
+  border-radius: 50%;
+  width: 52px;
+  height: 52px;
+  justify-content: center;
+  border: 2px solid var(--yellow);
+  box-shadow: 0 8px 26px rgba(6, 47, 82, 0.45), 0 0 16px rgba(255, 201, 40, 0.3);
+}
+.floating-lead-prompt.is-collapsed-fab .flp-text,
+.floating-lead-prompt.is-collapsed-fab .flp-arrow,
+.floating-lead-prompt.is-collapsed-fab .flp-dismiss {
+  display: none !important;
+}
+.floating-lead-prompt.is-collapsed-fab .flp-icon {
+  width: 32px;
+  height: 32px;
 }
 .flp-icon {
   width: 34px;
@@ -2539,8 +2576,8 @@ body.lead-modal-open {
   position: absolute;
   top: -6px;
   right: -6px;
-  width: 22px;
-  height: 22px;
+  width: 24px;
+  height: 24px;
   border-radius: 50%;
   background: var(--dark);
   border: 1px solid rgba(255, 255, 255, 0.3);
@@ -2550,6 +2587,8 @@ body.lead-modal-open {
   justify-content: center;
   cursor: pointer;
   transition: background .2s var(--ease), color .2s var(--ease);
+  z-index: 2;
+  touch-action: manipulation;
 }
 .flp-dismiss:hover {
   background: #000;
@@ -2611,6 +2650,12 @@ body.lead-modal-open {
     bottom: max(16px, env(safe-area-inset-bottom, 16px));
     right: max(16px, env(safe-area-inset-right, 16px));
     max-width: calc(100vw - 32px);
+    z-index: 9999;
+  }
+  .floating-lead-prompt.is-collapsed-fab .flp-card {
+    width: 48px;
+    height: 48px;
+    padding: 8px;
   }
   .flp-card {
     padding: 8px 14px 8px 10px;
@@ -2728,6 +2773,12 @@ body.lead-modal-open {
     bottom: max(12px, env(safe-area-inset-bottom, 12px));
     right: max(12px, env(safe-area-inset-right, 12px));
     max-width: calc(100vw - 24px);
+    z-index: 9999;
+  }
+  .floating-lead-prompt.is-collapsed-fab .flp-card {
+    width: 44px;
+    height: 44px;
+    padding: 6px;
   }
   .flp-card {
     padding: 6px 11px 6px 8px;

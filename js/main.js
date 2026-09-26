@@ -162,6 +162,7 @@ document.getElementById('year').textContent = new Date().getFullYear();
 (function() {
   const grid = document.getElementById('videoGalleryGrid');
   const toggleBtn = document.getElementById('btnToggleVideos');
+  const expSection = document.getElementById('experiences');
   const modalBackdrop = document.getElementById('videoModalBackdrop');
   const modalDialog = document.getElementById('videoModalDialog');
   const modalVideo = document.getElementById('modalVideoPlayer');
@@ -173,173 +174,184 @@ document.getElementById('year').textContent = new Date().getFullYear();
   if (!grid || !modalBackdrop || !modalVideo) return;
 
   const cards = Array.from(grid.querySelectorAll('.short-video-card'));
+  const totalCards = cards.length;
   let lastFocusedCard = null;
-  let isExpanded = false;
+  let isSectionInView = false;
 
   const isMobile = () => window.innerWidth <= 1024;
+  const getInitialCount = () => (isMobile() ? 6 : 5);
+  const getStepCount = () => (isMobile() ? 6 : 5);
 
-  // Initialize all preview videos: strictly muted, loop, playsinline
+  let visibleCount = getInitialCount();
+
+  // Initialize preview video elements: strictly muted, loop, playsinline
   cards.forEach(card => {
+    card.classList.remove('is-collapsed', 'is-collapsed-mobile');
+
     const video = card.querySelector('video');
     if (video) {
       video.muted = true;
       video.defaultMuted = true;
       video.setAttribute('muted', '');
+      video.loop = true;
+      video.setAttribute('loop', '');
       video.playsInline = true;
       video.setAttribute('playsinline', '');
     }
   });
 
-  // High-Performance On-Demand Video Preview:
-  // Prevents concurrent multi-video bandwidth choking by allowing AT MOST 1 active preview stream
-  let activePreviewVideo = null;
-  let hoverTimeout = null;
-
-  const playVideo = (video) => {
+  // Play a single card preview video muted
+  function playCardVideo(video) {
     if (!video) return;
-    if (activePreviewVideo && activePreviewVideo !== video) {
-      pauseVideo(activePreviewVideo);
-    }
-    activePreviewVideo = video;
     if (video.dataset.src && !video.src) {
       video.src = video.dataset.src;
       video.load();
     }
     video.muted = true;
+    video.defaultMuted = true;
+    video.loop = true;
+    video.playsInline = true;
     const p = video.play();
     if (p !== undefined) {
       p.catch(() => {});
     }
-  };
+  }
 
-  const pauseVideo = (video) => {
+  // Pause a single card preview video
+  function pauseCardVideo(video) {
     if (!video) return;
     video.pause();
-    if (activePreviewVideo === video) {
-      activePreviewVideo = null;
-    }
-  };
+  }
 
-  // 1. Desktop: Instant smooth preview on hover (with 120ms debounce to ignore fast mouse passing)
-  cards.forEach(card => {
-    const video = card.querySelector('video');
-    if (!video) return;
-
-    card.addEventListener('mouseenter', () => {
-      if (modalBackdrop.classList.contains('is-active')) return;
-      clearTimeout(hoverTimeout);
-      hoverTimeout = setTimeout(() => {
-        playVideo(video);
-      }, 120);
-    });
-
-    card.addEventListener('mouseleave', () => {
-      clearTimeout(hoverTimeout);
-      pauseVideo(video);
-    });
-  });
-
-  // 2. Mobile: Only preview the SINGLE card most centered in viewport, never 6-12 cards in parallel
-  const io = new IntersectionObserver((entries) => {
+  // Play all currently visible videos in the experiences section (muted)
+  function playAllVisibleVideos() {
+    if (!isSectionInView) return;
     if (modalBackdrop.classList.contains('is-active')) return;
 
-    if (!isMobile()) {
-      // On desktop, pause videos when they leave the viewport completely
-      entries.forEach(entry => {
-        if (!entry.isIntersecting) {
-          const v = entry.target.querySelector('video');
-          if (v && v === activePreviewVideo) pauseVideo(v);
-        }
-      });
-      return;
-    }
-
-    const visibleCards = entries.filter(e => {
-      if (!e.isIntersecting) {
-        const v = e.target.querySelector('video');
-        if (v && v === activePreviewVideo) pauseVideo(v);
-        return false;
-      }
-      const isHidden = e.target.classList.contains('is-collapsed') && !isExpanded;
-      const isHiddenMobile = e.target.classList.contains('is-collapsed-mobile') && !isExpanded;
-      return !isHidden && !isHiddenMobile;
-    });
-
-    if (visibleCards.length > 0) {
-      const viewportCenter = window.innerHeight / 2;
-      let closestCard = visibleCards[0].target;
-      let minDistance = Infinity;
-
-      visibleCards.forEach(e => {
-        const rect = e.target.getBoundingClientRect();
-        const cardCenter = rect.top + rect.height / 2;
-        const dist = Math.abs(cardCenter - viewportCenter);
-        if (dist < minDistance) {
-          minDistance = dist;
-          closestCard = e.target;
-        }
-      });
-
-      const videoToPlay = closestCard.querySelector('video');
-      if (videoToPlay && videoToPlay !== activePreviewVideo) {
-        playVideo(videoToPlay);
-      }
-    }
-  }, {
-    threshold: 0.5
-  });
-
-  cards.forEach(card => io.observe(card));
-
-  // Toggle "View all experiences" / "Show fewer experiences"
-  if (toggleBtn) {
-    toggleBtn.addEventListener('click', () => {
-      isExpanded = !isExpanded;
-      grid.classList.toggle('is-expanded', isExpanded);
-      toggleBtn.setAttribute('aria-expanded', isExpanded ? 'true' : 'false');
-      
-      const btnText = toggleBtn.querySelector('.btn-text');
-      if (btnText) {
-        btnText.textContent = isExpanded ? 'Show fewer experiences' : 'View all experiences';
-      }
-
-      // If expanding, ensure all newly revealed cards load and observe
-      if (isExpanded) {
-        cards.forEach(card => {
-          const video = card.querySelector('video');
-          if (video && video.dataset.src && !video.src) {
-            video.src = video.dataset.src;
-            video.load();
-          }
-          // Check intersection
-          const rect = card.getBoundingClientRect();
-          if (rect.top < window.innerHeight && rect.bottom > 0) {
-            playVideo(video);
-          }
-        });
+    cards.forEach((card, idx) => {
+      const video = card.querySelector('video');
+      if (idx < visibleCount && !card.classList.contains('is-hidden-card')) {
+        playCardVideo(video);
       } else {
-        // Collapsing: pause hidden cards
-        cards.forEach(card => {
-          const isHidden = card.classList.contains('is-collapsed');
-          const isHiddenMobile = card.classList.contains('is-collapsed-mobile') && isMobile();
-          if (isHidden || isHiddenMobile) {
-            const video = card.querySelector('video');
-            pauseVideo(video);
-          }
-        });
-        // Smoothly scroll back to section heading if user scrolled way down
-        const section = document.getElementById('experiences');
-        if (section) {
-          const rect = section.getBoundingClientRect();
-          if (rect.top < 0) {
-            section.scrollIntoView({ behavior: 'smooth', block: 'start' });
-          }
-        }
+        pauseCardVideo(video);
       }
     });
   }
 
-  // Card click -> Open Centered Modal with Sound
+  // Pause all preview videos
+  function pauseAllVideos() {
+    cards.forEach(card => {
+      pauseCardVideo(card.querySelector('video'));
+    });
+  }
+
+  // Update card visibility and toggle button state
+  function updateGalleryDisplay(animateNewlyRevealed = false, prevCount = 0) {
+    cards.forEach((card, idx) => {
+      card.classList.remove('is-collapsed', 'is-collapsed-mobile');
+      if (idx < visibleCount) {
+        card.classList.remove('is-hidden-card');
+        card.removeAttribute('aria-hidden');
+        if (animateNewlyRevealed && idx >= prevCount) {
+          card.classList.add('is-revealed-step');
+          setTimeout(() => card.classList.remove('is-revealed-step'), 600);
+        }
+      } else {
+        card.classList.add('is-hidden-card');
+        card.setAttribute('aria-hidden', 'true');
+        pauseCardVideo(card.querySelector('video'));
+      }
+    });
+
+    const isAllShown = visibleCount >= totalCards;
+    grid.classList.toggle('is-expanded', isAllShown);
+
+    if (toggleBtn) {
+      toggleBtn.setAttribute('aria-expanded', isAllShown ? 'true' : 'false');
+      const btnText = toggleBtn.querySelector('.btn-text');
+      const badgeCount = toggleBtn.querySelector('.badge-count');
+
+      if (isAllShown) {
+        if (btnText) btnText.textContent = 'Show fewer experiences';
+        if (badgeCount) badgeCount.textContent = totalCards;
+      } else {
+        const remaining = totalCards - visibleCount;
+        const step = getStepCount();
+        const nextStep = Math.min(step, remaining);
+        if (btnText) btnText.textContent = `View more experiences (+${nextStep})`;
+        if (badgeCount) badgeCount.textContent = remaining;
+      }
+    }
+
+    if (isSectionInView) {
+      playAllVisibleVideos();
+    }
+  }
+
+  // Initial render
+  updateGalleryDisplay(false);
+
+  // Toggle button handler: Expand by 5 (desktop) or 6 (mobile), or collapse back to initial
+  if (toggleBtn) {
+    toggleBtn.addEventListener('click', () => {
+      const isAllShown = visibleCount >= totalCards;
+
+      if (isAllShown) {
+        // Collapse back to initial count
+        visibleCount = getInitialCount();
+        updateGalleryDisplay(false);
+
+        // Smooth scroll back to section heading
+        if (expSection) {
+          expSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+      } else {
+        // Expand next 5-5 (desktop) or 6-6 (mobile)
+        const prev = visibleCount;
+        const step = getStepCount();
+        visibleCount = Math.min(visibleCount + step, totalCards);
+        updateGalleryDisplay(true, prev);
+      }
+    });
+  }
+
+  // Section Observer: Autoplay all visible videos without sound when entering #experiences
+  if (expSection) {
+    const expObserver = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          isSectionInView = true;
+          playAllVisibleVideos();
+        } else {
+          isSectionInView = false;
+          pauseAllVideos();
+        }
+      });
+    }, {
+      threshold: 0.12,
+      rootMargin: '50px 0px 50px 0px'
+    });
+
+    expObserver.observe(expSection);
+  }
+
+  // Immediate visibility check fallback
+  const checkSectionVisibility = () => {
+    if (!expSection) return;
+    const rect = expSection.getBoundingClientRect();
+    const inView = rect.top < window.innerHeight && rect.bottom > 0;
+    if (inView !== isSectionInView) {
+      isSectionInView = inView;
+      if (inView) playAllVisibleVideos();
+      else pauseAllVideos();
+    }
+  };
+  setTimeout(checkSectionVisibility, 250);
+  window.addEventListener('scroll', () => {
+    if (!isSectionInView) checkSectionVisibility();
+  }, { passive: true });
+
+  // Card click -> Open Centered Modal with Full Sound
   cards.forEach(card => {
     card.addEventListener('click', (e) => {
       e.preventDefault();
@@ -350,13 +362,10 @@ document.getElementById('year').textContent = new Date().getFullYear();
   function openModal(card) {
     lastFocusedCard = card;
 
-    // Pause all gallery previews
-    cards.forEach(c => {
-      const v = c.querySelector('video');
-      pauseVideo(v);
-    });
+    // Pause all background previews
+    pauseAllVideos();
 
-    const videoSrc = card.dataset.src || card.querySelector('video')?.src;
+    const videoSrc = card.dataset.src || card.querySelector('video')?.src || card.querySelector('video')?.dataset.src;
     const titleText = card.querySelector('.card-title')?.textContent || 'MMC Real Experience';
     const badgeText = card.querySelector('.card-badge span:last-child')?.textContent || 'Experience';
 
@@ -379,15 +388,13 @@ document.getElementById('year').textContent = new Date().getFullYear();
     // User gesture playback with sound
     const playPromise = modalVideo.play();
     if (playPromise !== undefined) {
-      playPromise.catch(err => {
-        // If sound autoplay is blocked by browser policy without unmuting interaction
+      playPromise.catch(() => {
         if (modalTapFallback) modalTapFallback.classList.add('is-active');
         modalVideo.muted = true;
         modalVideo.play().catch(() => {});
       });
     }
 
-    // Set focus
     setTimeout(() => {
       modalCloseBtn?.focus();
     }, 100);
@@ -404,16 +411,10 @@ document.getElementById('year').textContent = new Date().getFullYear();
     modalVideo.load();
     if (modalTapFallback) modalTapFallback.classList.remove('is-active');
 
-    // Resume muted preview for cards in viewport
-    cards.forEach(card => {
-      const rect = card.getBoundingClientRect();
-      const isHidden = card.classList.contains('is-collapsed') && !isExpanded;
-      const isHiddenMobile = card.classList.contains('is-collapsed-mobile') && isMobile() && !isExpanded;
-      if (rect.top < window.innerHeight && rect.bottom > 0 && !isHidden && !isHiddenMobile) {
-        const v = card.querySelector('video');
-        playVideo(v);
-      }
-    });
+    // Resume muted autoplay on all visible cards if section is still in view
+    if (isSectionInView) {
+      playAllVisibleVideos();
+    }
 
     if (lastFocusedCard) {
       lastFocusedCard.focus();
@@ -476,20 +477,13 @@ document.getElementById('year').textContent = new Date().getFullYear();
   // Pause preview videos when tab is hidden, resume when tab is active
   document.addEventListener('visibilitychange', () => {
     if (document.hidden) {
-      cards.forEach(c => pauseVideo(c.querySelector('video')));
+      pauseAllVideos();
       if (modalBackdrop.classList.contains('is-active')) {
         modalVideo.pause();
       }
     } else {
-      if (!modalBackdrop.classList.contains('is-active')) {
-        cards.forEach(card => {
-          const rect = card.getBoundingClientRect();
-          const isHidden = card.classList.contains('is-collapsed') && !isExpanded;
-          const isHiddenMobile = card.classList.contains('is-collapsed-mobile') && isMobile() && !isExpanded;
-          if (rect.top < window.innerHeight && rect.bottom > 0 && !isHidden && !isHiddenMobile) {
-            playVideo(card.querySelector('video'));
-          }
-        });
+      if (!modalBackdrop.classList.contains('is-active') && isSectionInView) {
+        playAllVisibleVideos();
       }
     }
   });
@@ -499,14 +493,10 @@ document.getElementById('year').textContent = new Date().getFullYear();
   window.addEventListener('resize', () => {
     clearTimeout(resizeTimeout);
     resizeTimeout = setTimeout(() => {
-      if (!isExpanded) {
-        cards.forEach(card => {
-          const isHidden = card.classList.contains('is-collapsed');
-          const isHiddenMobile = card.classList.contains('is-collapsed-mobile') && isMobile();
-          if (isHidden || isHiddenMobile) {
-            pauseVideo(card.querySelector('video'));
-          }
-        });
+      const minRequired = getInitialCount();
+      if (visibleCount < minRequired) {
+        visibleCount = minRequired;
+        updateGalleryDisplay(false);
       }
     }, 150);
   });
@@ -969,7 +959,7 @@ document.getElementById('year').textContent = new Date().getFullYear();
   }
 
   /* ============================================================
-     8. ENTRY POINT 2: MODAL CONTROLLER (10-SEC SPLASH & TRIGGERED)
+     8. ENTRY POINT 2: MODAL CONTROLLER (AUTOMATIC SPLASH & TRIGGERED)
      ============================================================ */
   function openLeadModal(sourceElementOrTrigger) {
     if (!modalBackdrop || !modalDialog) return;
@@ -986,14 +976,14 @@ document.getElementById('year').textContent = new Date().getFullYear();
     modalBackdrop.setAttribute('aria-hidden', 'false');
     document.body.classList.add('lead-modal-open');
 
-    // Hide floating prompt while modal is active to avoid visual clash
-    if (floatingPrompt) floatingPrompt.classList.add('is-hidden');
+    // Hide floating prompt smoothly while modal is active
+    if (floatingPrompt) floatingPrompt.classList.add('is-modal-active');
 
     // Accessibility focus management
     setTimeout(() => {
       const firstInp = modalDialog.querySelector('input:not([type="checkbox"])');
       if (firstInp) firstInp.focus();
-      else modalCloseBtn.focus();
+      else modalCloseBtn?.focus();
     }, 200);
   }
 
@@ -1005,9 +995,9 @@ document.getElementById('year').textContent = new Date().getFullYear();
     modalBackdrop.setAttribute('aria-hidden', 'true');
     document.body.classList.remove('lead-modal-open');
 
-    // Restore floating prompt if not dismissed
-    if (floatingPrompt && sessionStorage.getItem('mmc_floating_dismissed') !== '1') {
-      floatingPrompt.classList.remove('is-hidden');
+    // Restore floating prompt when modal closes
+    if (floatingPrompt) {
+      floatingPrompt.classList.remove('is-modal-active');
     }
 
     if (isExplicitDismissal) {
@@ -1059,49 +1049,85 @@ document.getElementById('year').textContent = new Date().getFullYear();
     }
   });
 
-  /* 10-Second Automatic Splash Trigger */
-  const hasSplashBeenHandled = sessionStorage.getItem('mmc_splash_dismissed') === '1' || sessionStorage.getItem('mmc_splash_shown') === '1';
+  /* Automatic Splash Trigger (Timer + Scroll Trigger) */
+  let hasSplashFired = false;
 
-  if (!hasSplashBeenHandled) {
-    setTimeout(() => {
-      // Do not open if user has interacted with any form, or hero form is open, or modal is already active
-      if (leadStore.hasInteracted) return;
-      if (heroBox && heroBox.classList.contains('is-expanded')) return;
-      if (modalBackdrop && modalBackdrop.classList.contains('is-active')) return;
-      if (document.body.classList.contains('video-modal-open')) return;
+  function tryTriggerAutoSplash() {
+    if (hasSplashFired) return;
+    // Do not pop if already submitted
+    if (sessionStorage.getItem('mmc_lead_submitted') === '1' || leadStore.isSubmitted) return;
+    // Do not pop if user explicitly closed the splash modal in this session
+    if (sessionStorage.getItem('mmc_splash_dismissed') === '1') return;
+    // Do not pop if modal or hero form or video modal is active
+    if (modalBackdrop && modalBackdrop.classList.contains('is-active')) return;
+    if (heroBox && heroBox.classList.contains('is-expanded')) return;
+    if (document.body.classList.contains('video-modal-open')) return;
 
-      sessionStorage.setItem('mmc_splash_shown', '1');
-      openLeadModal(null);
-    }, MMC_LEAD_CONFIG.SPLASH_DELAY_MS);
+    hasSplashFired = true;
+    openLeadModal(null);
   }
+
+  // 1. Time-based trigger: 3.5 seconds
+  setTimeout(tryTriggerAutoSplash, 3500);
+
+  // 2. Scroll-based trigger: fires when scrolled down > 300px
+  let splashScrollListener = () => {
+    if (window.scrollY > 300) {
+      window.removeEventListener('scroll', splashScrollListener);
+      tryTriggerAutoSplash();
+    }
+  };
+  window.addEventListener('scroll', splashScrollListener, { passive: true });
 
   /* ============================================================
      9. ENTRY POINT 3: BOTTOM-RIGHT FLOATING PROMPT
      ============================================================ */
-  if (floatingBtn) {
-    floatingBtn.addEventListener('click', () => {
-      leadStore.hasInteracted = true;
-      openLeadModal(floatingBtn);
-    });
-    floatingBtn.addEventListener('keydown', (e) => {
-      if (e.key === 'Enter' || e.key === ' ') {
-        e.preventDefault();
-        leadStore.hasInteracted = true;
-        openLeadModal(floatingBtn);
+  if (floatingPrompt) {
+    // If previously dismissed, keep in collapsed compact FAB mode
+    if (sessionStorage.getItem('mmc_floating_dismissed') === '1') {
+      floatingPrompt.classList.add('is-collapsed-fab');
+    }
+
+    const handleFloatingOpen = (e) => {
+      // Ignore if user tapped the dismiss cross
+      if (floatingDismiss && (e.target === floatingDismiss || floatingDismiss.contains(e.target))) {
+        return;
       }
-    });
-  }
-
-  if (floatingDismiss) {
-    floatingDismiss.addEventListener('click', (e) => {
+      e.preventDefault();
       e.stopPropagation();
-      sessionStorage.setItem('mmc_floating_dismissed', '1');
-      if (floatingPrompt) floatingPrompt.classList.add('is-hidden');
-    });
-  }
+      leadStore.hasInteracted = true;
+      openLeadModal(floatingBtn || floatingPrompt);
+    };
 
-  if (sessionStorage.getItem('mmc_floating_dismissed') === '1' && floatingPrompt) {
-    floatingPrompt.classList.add('is-hidden');
+    floatingPrompt.addEventListener('click', handleFloatingOpen);
+    floatingPrompt.addEventListener('touchend', (e) => {
+      if (floatingDismiss && (e.target === floatingDismiss || floatingDismiss.contains(e.target))) {
+        return;
+      }
+      handleFloatingOpen(e);
+    });
+
+    if (floatingBtn) {
+      floatingBtn.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          leadStore.hasInteracted = true;
+          openLeadModal(floatingBtn);
+        }
+      });
+    }
+
+    if (floatingDismiss) {
+      const handleDismiss = (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        sessionStorage.setItem('mmc_floating_dismissed', '1');
+        // Morph into compact circular action button so the bottom-right area remains responsive
+        floatingPrompt.classList.add('is-collapsed-fab');
+      };
+      floatingDismiss.addEventListener('click', handleDismiss);
+      floatingDismiss.addEventListener('touchend', handleDismiss);
+    }
   }
 
   /* ============================================================
