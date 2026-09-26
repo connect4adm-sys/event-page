@@ -621,6 +621,14 @@ tr:hover td {
           <option value="NOT_CONFIGURED">NOT_CONFIGURED</option>
         </select>
 
+        <select class="filter-select" id="crmFilter">
+          <option value="">All CRM Sync</option>
+          <option value="SYNCED">SYNCED</option>
+          <option value="PENDING">PENDING</option>
+          <option value="FAILED">FAILED</option>
+          <option value="NOT_CONFIGURED">NOT_CONFIGURED</option>
+        </select>
+
         <button type="button" class="btn-action btn-outline" id="exportCsvBtn">
           <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
           <span>Export CSV</span>
@@ -643,11 +651,12 @@ tr:hover td {
             <th>Source / Campaign</th>
             <th>Status</th>
             <th>Sheets Sync</th>
+            <th>CRM Sync</th>
             <th>Actions</th>
           </tr>
         </thead>
         <tbody id="leadsTableBody">
-          <tr><td colspan="8" style="text-align:center;padding:32px;">Loading leads from primary database...</td></tr>
+          <tr><td colspan="9" style="text-align:center;padding:32px;">Loading leads from primary database...</td></tr>
         </tbody>
       </table>
     </div>
@@ -764,18 +773,18 @@ tr:hover td {
   <section class="tab-pane" id="pane-integrations">
     <div class="charts-grid">
       <div class="panel-card">
-        <h3 class="panel-title">Primary Database (SQLite)</h3>
+        <h3 class="panel-title" id="dbHeaderTitle">Primary Database Architecture</h3>
         <div class="detail-grid">
-          <span class="detail-label">Database Type:</span>
-          <span class="detail-val">SQLite3 (Node 24 node:sqlite with WAL)</span>
-          <span class="detail-label">File Path:</span>
-          <span class="detail-val" id="dbPathVal">data/leads.db</span>
+          <span class="detail-label">Database Engine:</span>
+          <span class="detail-val" id="dbTypeVal">Cloudflare D1 / SQLite</span>
+          <span class="detail-label">Database ID / Path:</span>
+          <span class="detail-val" id="dbPathVal">a63cfb65-eb51-4ade-86f7-0154c874fb17</span>
           <span class="detail-label">Total Records:</span>
           <span class="detail-val" id="dbRecordsVal">0</span>
-          <span class="detail-label">File Size:</span>
-          <span class="detail-val" id="dbSizeVal">0 KB</span>
-          <span class="detail-label">Concurrency:</span>
-          <span class="detail-val">WAL Mode (Write-Ahead Logging)</span>
+          <span class="detail-label">Database Status:</span>
+          <span class="detail-val" id="dbStatusVal"><span class="badge badge-synced">CONNECTED</span></span>
+          <span class="detail-label">Concurrency &amp; Mode:</span>
+          <span class="detail-val" id="dbConcurrencyVal">Edge Replicated WAL</span>
         </div>
       </div>
 
@@ -789,8 +798,9 @@ tr:hover td {
           <span class="detail-label">Data Retention:</span>
           <span class="detail-val">730 Days (2 Years configurable in .env)</span>
         </div>
-        <div style="margin-top:18px;display:flex;gap:10px;">
+        <div style="margin-top:18px;display:flex;gap:10px;flex-wrap:wrap;">
           <button type="button" class="btn-action btn-outline" id="testSheetsBtn">Test Sheets Ping</button>
+          <button type="button" class="btn-action btn-outline" id="testCrmBtn">Test LeadsZone CRM Ping</button>
         </div>
       </div>
     </div>
@@ -849,6 +859,7 @@ tr:hover td {
 
       if (targetId === 'pane-geography') loadGeography();
       if (targetId === 'pane-meta') loadMetaAttribution();
+      if (targetId === 'pane-integrations') loadIntegrations();
     });
   });
 
@@ -862,6 +873,7 @@ tr:hover td {
   document.getElementById('refreshBtn').addEventListener('click', () => {
     loadOverview();
     loadLeads();
+    loadIntegrations();
   });
 
   // Load Overview Data
@@ -921,14 +933,22 @@ tr:hover td {
       // Integration Badges
       if (data.integrations) {
         const gs = data.integrations.google_sheets;
-        document.getElementById('sheetsStatusVal').innerHTML = gs.configured
-          ? `<span class="badge badge-synced">CONFIGURED (${gs.method})</span>`
+        const gsConfigured = typeof gs === 'boolean' ? gs : (gs && gs.configured);
+        const gsMethod = (gs && gs.method) ? ` (${gs.method})` : '';
+        document.getElementById('sheetsStatusVal').innerHTML = gsConfigured
+          ? `<span class="badge badge-synced">CONFIGURED${gsMethod}</span>`
           : `<span class="badge badge-unconfigured">NOT CONFIGURED</span>`;
 
         const crm = data.integrations.crm;
-        document.getElementById('crmStatusVal').innerHTML = crm.configured
-          ? `<span class="badge badge-synced">CONFIGURED (${crm.provider})</span>`
+        const crmConfigured = typeof crm === 'boolean' ? crm : (crm && crm.configured);
+        const crmProvider = (crm && crm.provider) ? ` (${crm.provider})` : '';
+        document.getElementById('crmStatusVal').innerHTML = crmConfigured
+          ? `<span class="badge badge-synced">CONFIGURED${crmProvider}</span>`
           : `<span class="badge badge-unconfigured">NOT CONFIGURED</span>`;
+      }
+
+      if (data.totalLeads !== undefined && document.getElementById('dbRecordsVal')) {
+        document.getElementById('dbRecordsVal').textContent = data.totalLeads.toLocaleString();
       }
     } catch (err) {
       console.error('Failed to load overview:', err);
@@ -941,12 +961,14 @@ tr:hover td {
     const role = document.getElementById('roleFilter').value;
     const status = document.getElementById('statusFilter').value;
     const gsheetStatus = document.getElementById('gsheetFilter').value;
+    const crmStatus = document.getElementById('crmFilter').value;
 
     const params = new URLSearchParams({
       search,
       role,
       status,
       gsheetStatus,
+      crmStatus,
       limit: PAGE_LIMIT,
       offset: currentOffset
     });
@@ -958,7 +980,7 @@ tr:hover td {
 
       const tbody = document.getElementById('leadsTableBody');
       if (!data.leads || data.leads.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;padding:32px;color:var(--muted);">No matching leads found in the database.</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;padding:32px;color:var(--muted);">No matching leads found in the database.</td></tr>';
         document.getElementById('pageInfo').textContent = 'Showing 0 of 0 leads';
         document.getElementById('prevPageBtn').disabled = true;
         document.getElementById('nextPageBtn').disabled = true;
@@ -968,7 +990,7 @@ tr:hover td {
       tbody.innerHTML = data.leads.map(lead => {
         const dateStr = new Date(lead.created_at).toLocaleString('en-IN', { dateStyle: 'short', timeStyle: 'short' });
         const gsheetBadge = getSyncBadge(lead.google_sheet_sync_status);
-        const statusBadge = getStatusBadge(lead.lead_status);
+        const crmBadge = getSyncBadge(lead.crm_sync_status);
 
         return `
           <tr>
@@ -1004,6 +1026,11 @@ tr:hover td {
             <td>
               ${gsheetBadge}
               ${lead.google_sheet_sync_status === 'FAILED' ? `<button onclick="window.retryLeadSync('${lead.lead_id}')" style="margin-left:4px;padding:2px 6px;font-size:10px;cursor:pointer;">Retry</button>` : ''}
+            </td>
+            <td>
+              ${crmBadge}
+              ${lead.crm_record_id ? `<br><small style="color:var(--muted);font-size:10px;">ID: ${escapeHtml(lead.crm_record_id)}</small>` : ''}
+              ${lead.crm_sync_status === 'FAILED' || lead.crm_sync_status === 'PENDING' ? `<button onclick="window.retryLeadSync('${lead.lead_id}')" style="margin-left:4px;padding:2px 6px;font-size:10px;cursor:pointer;">Retry</button>` : ''}
             </td>
             <td>
               <button type="button" class="btn-action btn-outline" style="padding:4px 8px;font-size:11px;" onclick="window.showLeadDetails('${lead.lead_id}')">View</button>
@@ -1070,7 +1097,7 @@ tr:hover td {
         <span class="detail-label">Landing URL:</span><span class="detail-val">${lead.landing_page_url || 'None'}</span>
         <span class="detail-label">Referrer:</span><span class="detail-val">${lead.referrer_url || 'None'}</span>
         <span class="detail-label">Sheets Sync:</span><span class="detail-val">${lead.google_sheet_sync_status} ${lead.google_sheet_error ? '<br><small style="color:red">' + escapeHtml(lead.google_sheet_error) + '</small>' : ''}</span>
-        <span class="detail-label">CRM Sync:</span><span class="detail-val">${lead.crm_sync_status}</span>
+        <span class="detail-label">CRM Sync:</span><span class="detail-val">${lead.crm_sync_status} ${lead.crm_record_id ? ' (CRM ID: ' + escapeHtml(lead.crm_record_id) + ')' : ''} ${lead.crm_error ? '<br><small style="color:red">' + escapeHtml(lead.crm_error) + '</small>' : ''}</span>
         <span class="detail-label">Duplicate Suspect:</span><span class="detail-val">${lead.is_duplicate_suspect ? '<span style="color:var(--warning);font-weight:700;">YES: ' + escapeHtml(lead.duplicate_reason) + '</span>' : 'No'}</span>
       `;
 
@@ -1104,6 +1131,7 @@ tr:hover td {
       await fetch(`/api/admin/leads/${leadId}/retry-sync`, { method: 'POST' });
       loadLeads();
       loadOverview();
+      loadIntegrations();
     } catch (err) {
       alert('Retry sync request failed.');
     }
@@ -1114,9 +1142,13 @@ tr:hover td {
     try {
       const res = await fetch('/api/admin/integrations/retry-all', { method: 'POST' });
       const data = await res.json();
-      alert(`Sync finished: ${data.succeeded} succeeded, ${data.failed} failed of ${data.total} total.`);
+      const succeeded = data.succeeded !== undefined ? data.succeeded : (data.sheets?.succeeded || 0) + (data.crm?.succeeded || 0);
+      const failed = data.failed !== undefined ? data.failed : (data.sheets?.failed || 0) + (data.crm?.failed || 0);
+      const total = data.total !== undefined ? data.total : (data.sheets?.total || 0) + (data.crm?.total || 0);
+      alert(`Sync finished: ${succeeded} succeeded, ${failed} failed of ${total} total.`);
       loadLeads();
       loadOverview();
+      loadIntegrations();
     } catch (err) {
       alert('Batch sync failed');
     }
@@ -1148,6 +1180,7 @@ tr:hover td {
   document.getElementById('roleFilter').addEventListener('change', () => { currentOffset = 0; loadLeads(); });
   document.getElementById('statusFilter').addEventListener('change', () => { currentOffset = 0; loadLeads(); });
   document.getElementById('gsheetFilter').addEventListener('change', () => { currentOffset = 0; loadLeads(); });
+  document.getElementById('crmFilter').addEventListener('change', () => { currentOffset = 0; loadLeads(); });
 
   // Load Geography
   async function loadGeography() {
@@ -1201,20 +1234,94 @@ tr:hover td {
     }
   }
 
+  // Load Integrations & Health Data
+  async function loadIntegrations() {
+    try {
+      const res = await fetch('/api/admin/integrations/logs');
+      if (res.status === 401) { window.location.href = '/admin/login'; return; }
+      const data = await res.json();
+
+      if (data.database) {
+        const db = data.database;
+        if (document.getElementById('dbTypeVal')) document.getElementById('dbTypeVal').textContent = db.type || 'Cloudflare D1 SQL Database';
+        if (document.getElementById('dbPathVal')) document.getElementById('dbPathVal').textContent = db.id || 'a63cfb65-eb51-4ade-86f7-0154c874fb17';
+        if (document.getElementById('dbRecordsVal')) document.getElementById('dbRecordsVal').textContent = (db.total_leads ?? 0).toLocaleString();
+        if (document.getElementById('dbConcurrencyVal')) document.getElementById('dbConcurrencyVal').textContent = db.concurrency || 'Edge Distributed WAL';
+        if (document.getElementById('dbStatusVal')) {
+          document.getElementById('dbStatusVal').innerHTML = `<span class="badge badge-synced">${db.status || 'CONNECTED'}</span>`;
+        }
+      }
+
+      const tbody = document.getElementById('syncLogsBody');
+      if (!tbody) return;
+
+      if (!data.logs || data.logs.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:16px;color:var(--muted);">No synchronization attempts logged yet.</td></tr>';
+        return;
+      }
+
+      tbody.innerHTML = data.logs.map(log => {
+        const dateStr = new Date(log.attempted_at).toLocaleString('en-IN', { dateStyle: 'short', timeStyle: 'medium' });
+        const statusBadge = log.status === 'SUCCESS' || log.status === 'SYNCED'
+          ? '<span class="badge badge-synced">SUCCESS</span>'
+          : (log.status === 'PENDING' ? '<span class="badge badge-pending">PENDING</span>' : '<span class="badge badge-failed">FAILED</span>');
+
+        return `
+          <tr>
+            <td><b>${escapeHtml(log.lead_id)}</b></td>
+            <td><span class="badge ${log.target === 'CRM' ? 'badge-qualified' : 'badge-new'}">${escapeHtml(log.target)}</span></td>
+            <td>${statusBadge}</td>
+            <td>${log.duration_ms ? log.duration_ms + 'ms' : '-'}</td>
+            <td><small style="color:var(--muted);">${dateStr}</small></td>
+            <td><small style="color:${log.status === 'FAILED' ? 'var(--danger)' : 'var(--muted)};">${escapeHtml(log.error_message || 'OK')}</small></td>
+          </tr>
+        `;
+      }).join('');
+    } catch (err) {
+      console.error('Failed to load integrations:', err);
+    }
+  }
+
   // Test Sheets Ping
   document.getElementById('testSheetsBtn').addEventListener('click', async () => {
+    const btn = document.getElementById('testSheetsBtn');
+    btn.disabled = true;
+    btn.textContent = 'Testing Sheets...';
     try {
       const res = await fetch('/api/admin/integrations/test-sheets', { method: 'POST' });
       const data = await res.json();
-      alert(data.message);
+      alert(data.message || (data.success ? 'Sheets ping succeeded!' : 'Sheets ping failed.'));
+      loadIntegrations();
     } catch (err) {
-      alert('Error testing connection');
+      alert('Error testing Google Sheets connection');
+    } finally {
+      btn.disabled = false;
+      btn.textContent = 'Test Sheets Ping';
+    }
+  });
+
+  // Test LeadsZone CRM Ping
+  document.getElementById('testCrmBtn').addEventListener('click', async () => {
+    const btn = document.getElementById('testCrmBtn');
+    btn.disabled = true;
+    btn.textContent = 'Testing CRM...';
+    try {
+      const res = await fetch('/api/admin/integrations/test-crm', { method: 'POST' });
+      const data = await res.json();
+      alert(data.message || (data.success ? 'CRM ping succeeded!' : 'CRM ping failed.'));
+      loadIntegrations();
+    } catch (err) {
+      alert('Error testing LeadsZone CRM connection');
+    } finally {
+      btn.disabled = false;
+      btn.textContent = 'Test LeadsZone CRM Ping';
     }
   });
 
   // Initial Boot
   loadOverview();
   loadLeads();
+  loadIntegrations();
 })();
 </script>
 </body>

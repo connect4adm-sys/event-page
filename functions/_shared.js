@@ -8,6 +8,7 @@ import crypto from 'node:crypto';
 export const DEFAULT_INITIAL_HASH = 'scrypt$7f3b89a1c2e406f890123456789abcde$d874a0ddb29944e58cfd9b0db7d42e8aca1e7860b5932aefb014e4e9a51e5d998b0547fd822ce7a26b8022bf68de932b385a3b7fcf397e5cc34d1eae7a6cb779';
 export const DEFAULT_PASSWORD_FALLBACK = 'Mymentorcircle@2026';
 export const DEFAULT_SHEETS_WEBHOOK_URL = 'https://script.google.com/macros/s/AKfycbyLHGnnzjrdzbDGmWfeocMEcPkG3iKhKUcuyXKXtPv5hUly7kMmAk6A7KLXFYSVFi8PQA/exec';
+export const DEFAULT_CRM_API_URL = 'https://app.leadszone.ai/api/integrate/a46e4428-cb4c-4a0c-98a5-5af15716d4e0/leads';
 
 
 export function json(data, status = 200, extraHeaders = {}) {
@@ -173,7 +174,7 @@ export async function syncToGoogleSheets(lead, env) {
 }
 
 export async function syncToLeadsZone(lead, env) {
-  const crmUrl = env.CRM_API_URL || 'https://app.leadszone.ai/api/integrate/a46e4428-cb4c-4a0c-98a5-5af15716d4e0/leads';
+  const crmUrl = (env && env.CRM_API_URL && env.CRM_API_URL.trim()) || DEFAULT_CRM_API_URL;
   if (!crmUrl || !crmUrl.trim()) {
     if (env.DB) {
       await env.DB.prepare(
@@ -436,11 +437,17 @@ export async function getDashboardSummaryD1(env, dateRangeDays = 30) {
     gsheetStats: gsheetRows.results || [],
     crmStats: crmRows.results || [],
     integrations: {
-      google_sheets: Boolean((env && env.GOOGLE_SHEETS_WEBHOOK_URL && env.GOOGLE_SHEETS_WEBHOOK_URL.trim()) || DEFAULT_SHEETS_WEBHOOK_URL),
-      crm: Boolean(env && env.CRM_API_URL && env.CRM_API_URL.trim()),
+      google_sheets: {
+        configured: Boolean((env && env.GOOGLE_SHEETS_WEBHOOK_URL && env.GOOGLE_SHEETS_WEBHOOK_URL.trim()) || DEFAULT_SHEETS_WEBHOOK_URL),
+        method: 'WEBHOOK'
+      },
+      crm: {
+        configured: Boolean((env && env.CRM_API_URL && env.CRM_API_URL.trim()) || DEFAULT_CRM_API_URL),
+        provider: (env && env.CRM_PROVIDER) || 'LeadsZone'
+      },
       meta_api: {
-        configured: Boolean(env.META_ACCESS_TOKEN && env.META_AD_ACCOUNT_ID),
-        ad_account_id: env.META_AD_ACCOUNT_ID ? 'act_***' : null
+        configured: Boolean(env && env.META_ACCESS_TOKEN && env.META_AD_ACCOUNT_ID),
+        ad_account_id: env && env.META_AD_ACCOUNT_ID ? 'act_***' : null
       }
     }
   };

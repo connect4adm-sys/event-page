@@ -7,9 +7,11 @@
 require('./env');
 const db = require('./db');
 
+const DEFAULT_CRM_API_URL = 'https://app.leadszone.ai/api/integrate/a46e4428-cb4c-4a0c-98a5-5af15716d4e0/leads';
+
 function isConfigured() {
   const provider = (process.env.CRM_PROVIDER || 'LeadsZone').trim();
-  const apiUrl = (process.env.CRM_API_URL || '').trim();
+  const apiUrl = (process.env.CRM_API_URL || DEFAULT_CRM_API_URL).trim();
 
   if (apiUrl && apiUrl.length > 0) {
     return { configured: true, provider, apiUrl };

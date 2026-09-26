@@ -9,12 +9,15 @@ const http = require('node:http');
 require('./env');
 const db = require('./db');
 
+const DEFAULT_SHEETS_WEBHOOK_URL = 'https://script.google.com/macros/s/AKfycbyLHGnnzjrdzbDGmWfeocMEcPkG3iKhKUcuyXKXtPv5hUly7kMmAk6A7KLXFYSVFi8PQA/exec';
+
 /**
  * Check if Google Sheets integration is configured in environment.
  */
 function isConfigured() {
-  if (process.env.GOOGLE_SHEETS_WEBHOOK_URL && process.env.GOOGLE_SHEETS_WEBHOOK_URL.trim().length > 0) {
-    return { configured: true, method: 'WEBHOOK' };
+  const webhookUrl = (process.env.GOOGLE_SHEETS_WEBHOOK_URL || DEFAULT_SHEETS_WEBHOOK_URL).trim();
+  if (webhookUrl && webhookUrl.length > 0) {
+    return { configured: true, method: 'WEBHOOK', webhookUrl };
   }
   if (
     process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL &&
@@ -104,7 +107,7 @@ async function syncLeadToGoogleSheets(leadId) {
 
   try {
     if (config.method === 'WEBHOOK') {
-      await postToWebhook(process.env.GOOGLE_SHEETS_WEBHOOK_URL, {
+      await postToWebhook(config.webhookUrl, {
         ...rowData,
         action: 'append_lead',
         lead: rowData
@@ -177,7 +180,7 @@ async function testConnection() {
 
   if (config.method === 'WEBHOOK') {
     try {
-      await postToWebhook(process.env.GOOGLE_SHEETS_WEBHOOK_URL, { action: 'ping' });
+      await postToWebhook(config.webhookUrl, { action: 'ping' });
       return { connected: true, method: 'WEBHOOK', message: 'Webhook connection responded successfully.' };
     } catch (err) {
       return { connected: false, method: 'WEBHOOK', message: `Webhook connection test failed: ${err.message}` };

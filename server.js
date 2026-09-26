@@ -355,6 +355,24 @@ const server = http.createServer(async (req, res) => {
       return sendJson(res, 200, testResult);
     }
 
+    // G2. Integration Audit Logs & Database Status
+    if (pathname === '/api/admin/integrations/logs' && method === 'GET') {
+      const stats = db.getDatabaseStats();
+      const logs = db.getSyncLogs(null, 50);
+      return sendJson(res, 200, {
+        success: true,
+        database: {
+          type: 'SQLite3 (Node 24 node:sqlite with WAL)',
+          id: stats.db_path,
+          total_leads: stats.total_leads,
+          file_size_kb: stats.file_size_kb,
+          status: 'CONNECTED',
+          concurrency: 'WAL Mode (Write-Ahead Logging)'
+        },
+        logs
+      });
+    }
+
     // H. Reports: Geography
     if (pathname === '/api/admin/reports/geography' && method === 'GET') {
       return sendJson(res, 200, analytics.getGeographyReport());

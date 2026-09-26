@@ -334,9 +334,13 @@ function addSyncLog(leadId, target, status, errorMessage = null, durationMs = 0)
   stmt.run(leadId, target, status, errorMessage, durationMs, new Date().toISOString());
 }
 
-function getSyncLogs(leadId) {
-  const stmt = db.prepare('SELECT * FROM sync_logs WHERE lead_id = ? ORDER BY attempted_at DESC');
-  return stmt.all(leadId);
+function getSyncLogs(leadId = null, limit = 50) {
+  if (leadId) {
+    const stmt = db.prepare('SELECT * FROM sync_logs WHERE lead_id = ? ORDER BY attempted_at DESC LIMIT ?');
+    return stmt.all(leadId, limit);
+  }
+  const stmt = db.prepare('SELECT * FROM sync_logs ORDER BY attempted_at DESC LIMIT ?');
+  return stmt.all(limit);
 }
 
 // -----------------------------------------------------------------------------

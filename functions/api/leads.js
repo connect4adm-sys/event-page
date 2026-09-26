@@ -1,4 +1,4 @@
-import { json, getClientIp, syncToGoogleSheets, syncToLeadsZone, DEFAULT_SHEETS_WEBHOOK_URL } from '../_shared.js';
+import { json, getClientIp, syncToGoogleSheets, syncToLeadsZone, DEFAULT_SHEETS_WEBHOOK_URL, DEFAULT_CRM_API_URL } from '../_shared.js';
 import crypto from 'node:crypto';
 
 const ALLOWED_ROLES = [
@@ -136,7 +136,7 @@ export async function onRequestPost(context) {
     fbclid: typeof body.fbclid === 'string' ? body.fbclid.slice(0, 200) : null,
     lead_status: 'NEW',
     google_sheet_sync_status: ((env && env.GOOGLE_SHEETS_WEBHOOK_URL && env.GOOGLE_SHEETS_WEBHOOK_URL.trim()) || DEFAULT_SHEETS_WEBHOOK_URL) ? 'PENDING' : 'NOT_CONFIGURED',
-    crm_sync_status: env.CRM_API_URL ? 'PENDING' : 'NOT_CONFIGURED',
+    crm_sync_status: ((env && env.CRM_API_URL && env.CRM_API_URL.trim()) || DEFAULT_CRM_API_URL) ? 'PENDING' : 'NOT_CONFIGURED',
     is_duplicate_suspect: isDuplicateSuspect,
     duplicate_reason: duplicateReason,
     ip_address: clientIp,
@@ -173,19 +173,21 @@ export async function onRequestPost(context) {
     leadRecord.created_at, leadRecord.updated_at
   ).run();
 
-  // Asynchronously execute downstream syncs (Google Sheets + LeadsZone CRM) without blocking client response
-  const backgroundSync = async () => {
-    await Promise.allSettled([
-      syncToGoogleSheets(leadRecord, env),
-      syncToLeadsZone(leadRecord, env)
-    ]);
-  };
+  // Execute downstream syncs (Google Sheets + LeadsZone CRM)
+  const syncPromise = Promise.allSettled([
+    syncToGoogleSheets(leadRecord, env),
+    syncToLeadsZone(leadRecord, env)
+  ]);
 
-  if (waitUntil) {
-    waitUntil(backgroundSync());
-  } else {
-    backgroundSync().catch(() => {});
+  if (context && typeof context.waitUntil === 'function') {
+    context.waitUntil(syncPromise);
   }
+
+  // Await with race timeout so D1 database status is updated to SYNCED immediately before response
+  await Promise.race([
+    syncPromise,
+    new Promise(r => setTimeout(r, 2000))
+  ]);
 
   return json({
     success: true,
