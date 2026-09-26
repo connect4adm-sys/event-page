@@ -1,4 +1,4 @@
-import { json, verifyAdminSession } from '../../../_shared.js';
+import { json, verifyAdminSession, DEFAULT_SHEETS_WEBHOOK_URL } from '../../../_shared.js';
 
 export async function onRequestPost(context) {
   const { request, env } = context;
@@ -8,12 +8,12 @@ export async function onRequestPost(context) {
     return json({ success: false, message: 'Unauthorized. Administrative session required.' }, 401);
   }
 
-  const webhookUrl = env.GOOGLE_SHEETS_WEBHOOK_URL;
+  const webhookUrl = (env && env.GOOGLE_SHEETS_WEBHOOK_URL && env.GOOGLE_SHEETS_WEBHOOK_URL.trim()) || DEFAULT_SHEETS_WEBHOOK_URL;
   if (!webhookUrl || !webhookUrl.trim()) {
     return json({
       success: false,
       configured: false,
-      message: 'GOOGLE_SHEETS_WEBHOOK_URL is not configured in Cloudflare environment variables.'
+      message: 'GOOGLE_SHEETS_WEBHOOK_URL is not configured.'
     }, 200);
   }
 
@@ -35,7 +35,8 @@ export async function onRequestPost(context) {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'User-Agent': 'MMC-Cloudflare-LeadEngine/1.0' },
       body: JSON.stringify(testPayload),
-      signal: AbortSignal.timeout(10000)
+      redirect: 'follow',
+      signal: AbortSignal.timeout(15000)
     });
 
     const duration = Date.now() - startTime;

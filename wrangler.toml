@@ -10,3 +10,7 @@ binding = "DB"
 database_name = "a63cfb65-eb51-4ade-86f7-0154c874fb17"
 database_id = "a63cfb65-eb51-4ade-86f7-0154c874fb17"
 migrations_dir = "migrations"
+
+[vars]
+GOOGLE_SHEETS_WEBHOOK_URL = "https://script.google.com/macros/s/AKfycbyLHGnnzjrdzbDGmWfeocMEcPkG3iKhKUcuyXKXtPv5hUly7kMmAk6A7KLXFYSVFi8PQA/exec"
+NODE_ENV = "production"

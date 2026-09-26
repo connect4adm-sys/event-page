@@ -1,4 +1,4 @@
-import { json } from '../_shared.js';
+import { json, DEFAULT_SHEETS_WEBHOOK_URL } from '../_shared.js';
 
 export async function onRequestGet(context) {
   const { env } = context;
@@ -29,7 +29,7 @@ export async function onRequestGet(context) {
     },
     integrations: {
       google_sheets: {
-        configured: Boolean(env.GOOGLE_SHEETS_WEBHOOK_URL && env.GOOGLE_SHEETS_WEBHOOK_URL.trim())
+        configured: Boolean((env && env.GOOGLE_SHEETS_WEBHOOK_URL && env.GOOGLE_SHEETS_WEBHOOK_URL.trim()) || DEFAULT_SHEETS_WEBHOOK_URL)
       },
       crm: {
         configured: Boolean(env.CRM_API_URL && env.CRM_API_URL.trim()),

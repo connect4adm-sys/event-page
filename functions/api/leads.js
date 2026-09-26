@@ -1,4 +1,4 @@
-import { json, getClientIp, syncToGoogleSheets, syncToLeadsZone } from '../_shared.js';
+import { json, getClientIp, syncToGoogleSheets, syncToLeadsZone, DEFAULT_SHEETS_WEBHOOK_URL } from '../_shared.js';
 import crypto from 'node:crypto';
 
 const ALLOWED_ROLES = [
@@ -135,7 +135,7 @@ export async function onRequestPost(context) {
     utm_term: typeof body.utm_term === 'string' ? body.utm_term.slice(0, 100) : null,
     fbclid: typeof body.fbclid === 'string' ? body.fbclid.slice(0, 200) : null,
     lead_status: 'NEW',
-    google_sheet_sync_status: env.GOOGLE_SHEETS_WEBHOOK_URL ? 'PENDING' : 'NOT_CONFIGURED',
+    google_sheet_sync_status: ((env && env.GOOGLE_SHEETS_WEBHOOK_URL && env.GOOGLE_SHEETS_WEBHOOK_URL.trim()) || DEFAULT_SHEETS_WEBHOOK_URL) ? 'PENDING' : 'NOT_CONFIGURED',
     crm_sync_status: env.CRM_API_URL ? 'PENDING' : 'NOT_CONFIGURED',
     is_duplicate_suspect: isDuplicateSuspect,
     duplicate_reason: duplicateReason,
