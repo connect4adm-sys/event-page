@@ -4,6 +4,7 @@
   "description": "MMC Career Readiness Grant™ 2027–28 Landing Page & Lead Infrastructure",
   "main": "server.js",
   "scripts": {
+    "dev": "node server.js",
     "start": "node server.js",
     "test": "node test.js",
     "pages:dev": "wrangler pages dev .",
