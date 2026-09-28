@@ -146,34 +146,6 @@ const shortVideos = [
     title: "School Experience 20",
     label: "Watch future-ready school workshop",
     tag: "Workshop"
-  },
-  {
-    id: "vid-21",
-    src: "videos/AQPnizAhk_zMfZ8tGA8hIcamSONomqwImZQr-Ax6DQVn44CLiJDzJT2VSD-3W49qRYH2MjzotrMk4TCSqvpHjvb_NExPtAq9boWkdEs.mp4",
-    title: "School Experience 21",
-    label: "Watch school leadership interaction",
-    tag: "Leadership"
-  },
-  {
-    id: "vid-22",
-    src: "videos/AQPUu3uF6cHGN0UuP_B5vGCUo8rw9kiJ-PiQdCX7JT-_fS8NqHCJb5Rkx1tYkLmsFE-zAhIg910is_0eySkyGb7QMD9OBgSroDs5SAA.mp4",
-    title: "School Experience 22",
-    label: "Watch student feedback",
-    tag: "Feedback"
-  },
-  {
-    id: "vid-23",
-    src: "videos/Video-55562.mp4",
-    title: "School Experience 23",
-    label: "Watch career session summary",
-    tag: "Session"
-  },
-  {
-    id: "vid-24",
-    src: "videos/Video-83565.mp4",
-    title: "School Experience 24",
-    label: "Watch programme moment",
-    tag: "Moment"
   }
 ];
 
