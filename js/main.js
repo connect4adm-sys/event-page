@@ -566,7 +566,7 @@ document.getElementById('year').textContent = new Date().getFullYear();
     // Approved privacy policy URL placeholder (replace before live launch):
     PRIVACY_POLICY_URL: "[PRIVACY_POLICY_URL_PLACEHOLDER]",
     CONSENT_VERSION: "v1.0-2027",
-    SPLASH_DELAY_MS: 10000,
+    SPLASH_DELAY_MS: 30000,
     // Enable test mode via URL parameter (?lead_test_mode=1) or flag for local testing:
     IS_TEST_MODE: (new URLSearchParams(window.location.search)).get('lead_test_mode') === '1'
   };
@@ -1071,7 +1071,7 @@ document.getElementById('year').textContent = new Date().getFullYear();
     }
   });
 
-  /* Automatic Splash Trigger (10 Seconds After Page Load) */
+  /* Automatic Splash Trigger (30 Seconds After Page Load) */
   let hasSplashFired = false;
 
   function tryTriggerAutoSplash() {
@@ -1087,8 +1087,8 @@ document.getElementById('year').textContent = new Date().getFullYear();
     openLeadModal(null);
   }
 
-  // Exact 10 seconds after page loads (10,000 ms)
-  const SPLASH_TIMER_MS = MMC_LEAD_CONFIG.SPLASH_DELAY_MS || 10000;
+  // Exact 30 seconds after page loads (30,000 ms)
+  const SPLASH_TIMER_MS = MMC_LEAD_CONFIG.SPLASH_DELAY_MS || 30000;
   setTimeout(tryTriggerAutoSplash, SPLASH_TIMER_MS);
 
   /* ============================================================

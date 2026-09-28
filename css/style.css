@@ -2344,7 +2344,7 @@ body.video-modal-open {
 }
 
 /* ------------------------------------------------------------
-   2. LEAD MODAL (10-Second Splash & Floating Trigger Modal)
+   2. LEAD MODAL (30-Second Splash & Floating Trigger Modal)
    ------------------------------------------------------------ */
 body.lead-modal-open {
   overflow: hidden !important;
