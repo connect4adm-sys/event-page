@@ -969,6 +969,28 @@ document.getElementById('year').textContent = new Date().getFullYear();
       ? sourceElementOrTrigger
       : document.activeElement;
 
+    // Check if triggered specifically for Topic Catalogue request
+    const isCatalog = sourceElementOrTrigger && (
+      sourceElementOrTrigger.id === 'viewTopicCatalogBtn' ||
+      sourceElementOrTrigger.id === 'viewTopicCatalogDoc' ||
+      (typeof sourceElementOrTrigger.getAttribute === 'function' && sourceElementOrTrigger.getAttribute('data-open-lead-modal') === 'catalogue') ||
+      (typeof sourceElementOrTrigger.closest === 'function' && sourceElementOrTrigger.closest('#viewTopicCatalogBtn, #viewTopicCatalogDoc, [data-open-lead-modal="catalogue"]'))
+    );
+
+    const titleEl = document.getElementById('leadModalTitle');
+    const descEl = modalDialog.querySelector('.lead-modal-desc');
+    const badgeSpan = modalDialog.querySelector('.lead-modal-badge span:last-child');
+
+    if (isCatalog) {
+      if (badgeSpan) badgeSpan.textContent = 'Topic Catalogue Request · 2027–28';
+      if (titleEl) titleEl.textContent = 'Request the Programme Topic Catalogue';
+      if (descEl) descEl.textContent = 'Enter your school details to receive the comprehensive Topic Catalogue (PDF) and grant eligibility information.';
+    } else {
+      if (badgeSpan) badgeSpan.textContent = 'School Grant Enquiry · 2027–28';
+      if (titleEl) titleEl.textContent = "Make career readiness part of your school's plan.";
+      if (descEl) descEl.textContent = "Submit your school's details to check eligibility for the MMC Career Readiness Grant™ and explore how your school can participate.";
+    }
+
     // Synchronize latest in-memory state before opening
     syncStateToAllForms(null);
 
@@ -1121,13 +1143,34 @@ document.getElementById('year').textContent = new Date().getFullYear();
   }
 
   /* ============================================================
-     10. GLOBAL CTA HOOKS
+     10. GLOBAL CTA HOOKS & TOPIC CATALOG TRIGGER
      ============================================================ */
+  const handleModalTrigger = (btn, e) => {
+    if (e) e.preventDefault();
+    leadStore.hasInteracted = true;
+    openLeadModal(btn);
+  };
+
   document.querySelectorAll('[data-open-lead-modal]').forEach(btn => {
-    btn.addEventListener('click', (e) => {
-      e.preventDefault();
-      leadStore.hasInteracted = true;
-      openLeadModal(btn);
+    btn.addEventListener('click', (e) => handleModalTrigger(btn, e));
+    btn.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' || e.key === ' ') {
+        handleModalTrigger(btn, e);
+      }
+    });
+  });
+
+  // Explicit handlers for Topic Catalog button and Document card
+  const topicCatalogBtn = document.getElementById('viewTopicCatalogBtn');
+  const topicCatalogDoc = document.getElementById('viewTopicCatalogDoc');
+
+  [topicCatalogBtn, topicCatalogDoc].forEach(el => {
+    if (!el) return;
+    el.addEventListener('click', (e) => handleModalTrigger(el, e));
+    el.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' || e.key === ' ') {
+        handleModalTrigger(el, e);
+      }
     });
   });
 
