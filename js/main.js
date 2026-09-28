@@ -1049,15 +1049,13 @@ document.getElementById('year').textContent = new Date().getFullYear();
     }
   });
 
-  /* Automatic Splash Trigger (Timer + Scroll Trigger) */
+  /* Automatic Splash Trigger (10 Seconds After Page Load) */
   let hasSplashFired = false;
 
   function tryTriggerAutoSplash() {
     if (hasSplashFired) return;
     // Do not pop if already submitted
     if (sessionStorage.getItem('mmc_lead_submitted') === '1' || leadStore.isSubmitted) return;
-    // Do not pop if user explicitly closed the splash modal in this session
-    if (sessionStorage.getItem('mmc_splash_dismissed') === '1') return;
     // Do not pop if modal or hero form or video modal is active
     if (modalBackdrop && modalBackdrop.classList.contains('is-active')) return;
     if (heroBox && heroBox.classList.contains('is-expanded')) return;
@@ -1067,17 +1065,9 @@ document.getElementById('year').textContent = new Date().getFullYear();
     openLeadModal(null);
   }
 
-  // 1. Time-based trigger: 3.5 seconds
-  setTimeout(tryTriggerAutoSplash, 3500);
-
-  // 2. Scroll-based trigger: fires when scrolled down > 300px
-  let splashScrollListener = () => {
-    if (window.scrollY > 300) {
-      window.removeEventListener('scroll', splashScrollListener);
-      tryTriggerAutoSplash();
-    }
-  };
-  window.addEventListener('scroll', splashScrollListener, { passive: true });
+  // Exact 10 seconds after page loads (10,000 ms)
+  const SPLASH_TIMER_MS = MMC_LEAD_CONFIG.SPLASH_DELAY_MS || 10000;
+  setTimeout(tryTriggerAutoSplash, SPLASH_TIMER_MS);
 
   /* ============================================================
      9. ENTRY POINT 3: BOTTOM-RIGHT FLOATING PROMPT
