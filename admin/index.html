@@ -21,17 +21,18 @@
   --white: #FFFFFF;
   --soft: #F4F8FC;
   --card-bg: #FFFFFF;
-  --line: rgba(6, 47, 82, 0.12);
-  --line-strong: rgba(6, 47, 82, 0.22);
+  --line: rgba(6, 47, 82, 0.10);
+  --line-strong: rgba(6, 47, 82, 0.20);
   --text: #0B2136;
   --muted: #5A738A;
   --danger: #D32F2F;
   --success: #2E7D32;
   --warning: #ED6C02;
   --radius: 12px;
-  --radius-lg: 18px;
-  --shadow: 0 4px 20px rgba(6, 47, 82, 0.08);
-  --shadow-lg: 0 12px 36px rgba(6, 47, 82, 0.14);
+  --radius-sm: 8px;
+  --radius-lg: 16px;
+  --shadow: 0 4px 18px rgba(6, 47, 82, 0.06);
+  --shadow-lg: 0 10px 30px rgba(6, 47, 82, 0.10);
 }
 * { box-sizing: border-box; margin: 0; padding: 0; }
 body {
@@ -47,11 +48,11 @@ body {
 .admin-header {
   background: var(--navy);
   color: var(--white);
-  padding: 14px 24px;
+  padding: 12px 24px;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  box-shadow: 0 2px 10px rgba(0,0,0,0.15);
+  box-shadow: 0 2px 10px rgba(0,0,0,0.12);
   position: sticky;
   top: 0;
   z-index: 100;
@@ -82,14 +83,14 @@ body {
 .header-brand-title span {
   font-size: 11px;
   color: var(--yellow);
-  letter-spacing: .08em;
+  letter-spacing: .06em;
   text-transform: uppercase;
   font-weight: 700;
 }
 .header-actions {
   display: flex;
   align-items: center;
-  gap: 14px;
+  gap: 10px;
 }
 .badge-admin {
   background: rgba(255, 201, 40, 0.18);
@@ -99,16 +100,16 @@ body {
   border-radius: 999px;
   font-size: 11px;
   font-weight: 700;
-  letter-spacing: .05em;
+  letter-spacing: .04em;
   text-transform: uppercase;
 }
 .btn-header {
   background: rgba(255, 255, 255, 0.12);
   border: 1px solid rgba(255, 255, 255, 0.22);
   color: var(--white);
-  padding: 6px 14px;
+  padding: 6px 12px;
   border-radius: 8px;
-  font-size: 12.5px;
+  font-size: 12px;
   font-weight: 600;
   cursor: pointer;
   display: inline-flex;
@@ -120,19 +121,19 @@ body {
   background: rgba(255, 255, 255, 0.22);
 }
 
-/* Nav Tabs */
+/* 4-Tab Navigation */
 .admin-nav {
   background: var(--white);
   border-bottom: 1px solid var(--line);
   padding: 0 24px;
   display: flex;
-  gap: 8px;
+  gap: 10px;
   overflow-x: auto;
   scrollbar-width: none;
 }
 .admin-nav::-webkit-scrollbar { display: none; }
 .nav-tab {
-  padding: 14px 16px;
+  padding: 14px 18px;
   border: none;
   background: none;
   font-family: 'Manrope', sans-serif;
@@ -145,7 +146,7 @@ body {
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  transition: color .2s, border-color .2s;
+  transition: all .2s;
 }
 .nav-tab:hover {
   color: var(--navy);
@@ -170,83 +171,158 @@ body {
   display: block;
 }
 
-/* Metric Cards Grid */
+/* Global Filter Toolbar */
+.filter-toolbar {
+  background: var(--card-bg);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 14px 18px;
+  margin-bottom: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+  box-shadow: var(--shadow);
+}
+.time-preset-group {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+.btn-time-preset {
+  background: var(--soft);
+  color: var(--navy);
+  border: 1px solid var(--line);
+  font-weight: 700;
+  padding: 6px 14px;
+  font-size: 12.5px;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: all .2s;
+}
+.btn-time-preset:hover {
+  background: rgba(6, 47, 82, 0.08);
+  border-color: rgba(6, 47, 82, 0.2);
+}
+.btn-time-preset.is-active {
+  background: var(--blue);
+  color: #fff;
+  border-color: var(--blue);
+  box-shadow: 0 2px 6px rgba(11, 84, 147, 0.25);
+}
+.custom-date-box {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.form-date {
+  padding: 5px 10px;
+  border-radius: 6px;
+  border: 1px solid var(--line-strong);
+  font-size: 12.5px;
+  background: #fff;
+  outline: none;
+}
+
+/* Metrics Grid */
 .metrics-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
   gap: 16px;
-  margin-bottom: 24px;
+  margin-bottom: 20px;
 }
 .metric-card {
   background: var(--card-bg);
   border-radius: var(--radius);
-  padding: 20px;
+  padding: 18px 20px;
   border: 1px solid var(--line);
   box-shadow: var(--shadow);
   display: flex;
   flex-direction: column;
+  position: relative;
+  overflow: hidden;
 }
+.metric-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: var(--blue);
+}
+.metric-card.card-accent-gold::before { background: var(--yellow); }
+.metric-card.card-accent-green::before { background: var(--success); }
+.metric-card.card-accent-purple::before { background: #7B1FA2; }
+.metric-card.card-accent-orange::before { background: var(--warning); }
+
 .metric-card .label {
-  font-size: 12px;
+  font-size: 11.5px;
   font-weight: 700;
-  letter-spacing: .06em;
+  letter-spacing: .05em;
   text-transform: uppercase;
   color: var(--muted);
-  margin-bottom: 8px;
+  margin-bottom: 6px;
 }
 .metric-card .val {
   font-family: 'Manrope', sans-serif;
-  font-size: 32px;
+  font-size: 30px;
   font-weight: 800;
   color: var(--navy);
   line-height: 1.1;
-  margin-bottom: 6px;
+  margin-bottom: 4px;
 }
 .metric-card .desc {
   font-size: 12px;
   color: var(--muted);
+  font-weight: 500;
 }
 
-/* Breakdown Grid */
-.charts-grid {
+/* Panels Grid */
+.panel-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-  gap: 20px;
-  margin-bottom: 24px;
-}
-@media (max-width: 600px) {
-  .charts-grid { grid-template-columns: 1fr; }
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 18px;
+  margin-bottom: 20px;
 }
 .panel-card {
   background: var(--card-bg);
   border-radius: var(--radius);
   border: 1px solid var(--line);
   box-shadow: var(--shadow);
-  padding: 22px;
+  padding: 20px;
 }
 .panel-title {
   font-family: 'Manrope', sans-serif;
-  font-size: 16px;
+  font-size: 15px;
   font-weight: 800;
   color: var(--navy);
-  margin-bottom: 16px;
+  margin-bottom: 14px;
   display: flex;
   align-items: center;
   justify-content: space-between;
 }
+.panel-title small {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--muted);
+}
 .list-breakdown {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 8px;
 }
 .item-row {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 8px 10px;
+  padding: 8px 12px;
   border-radius: 8px;
   background: var(--soft);
-  font-size: 13.5px;
+  font-size: 13px;
 }
 .item-row .name { font-weight: 600; color: var(--navy); }
 .item-row .count-badge {
@@ -258,34 +334,48 @@ body {
   border-radius: 999px;
 }
 
+/* Section Dwell Bars */
+.bar-track {
+  height: 6px;
+  background: rgba(6, 47, 82, 0.08);
+  border-radius: 999px;
+  overflow: hidden;
+  margin-top: 4px;
+}
+.bar-fill {
+  height: 100%;
+  border-radius: 999px;
+  background: linear-gradient(90deg, var(--blue), var(--yellow));
+}
+
 /* Table Controls */
 .table-controls {
   background: var(--card-bg);
   border-radius: var(--radius) var(--radius) 0 0;
   border: 1px solid var(--line);
   border-bottom: none;
-  padding: 16px 20px;
+  padding: 14px 18px;
   display: flex;
   flex-wrap: wrap;
-  gap: 12px;
+  gap: 10px;
   align-items: center;
   justify-content: space-between;
 }
 .search-wrap {
   position: relative;
-  flex: 1 1 260px;
+  flex: 1 1 240px;
 }
 .search-wrap input {
   width: 100%;
-  padding: 10px 14px 10px 36px;
+  padding: 8px 12px 8px 34px;
   border-radius: 8px;
   border: 1px solid var(--line-strong);
-  font-size: 13.5px;
+  font-size: 13px;
   outline: none;
 }
 .search-wrap svg {
   position: absolute;
-  left: 11px;
+  left: 10px;
   top: 50%;
   transform: translateY(-50%);
   color: var(--muted);
@@ -293,21 +383,21 @@ body {
 .filter-group {
   display: flex;
   flex-wrap: wrap;
-  gap: 10px;
+  gap: 8px;
 }
 .filter-select {
-  padding: 9px 12px;
+  padding: 7px 10px;
   border-radius: 8px;
   border: 1px solid var(--line-strong);
-  font-size: 13px;
+  font-size: 12.5px;
   background: var(--white);
   color: var(--navy);
   outline: none;
 }
 .btn-action {
-  padding: 9px 16px;
+  padding: 7px 14px;
   border-radius: 8px;
-  font-size: 13px;
+  font-size: 12.5px;
   font-weight: 700;
   cursor: pointer;
   display: inline-flex;
@@ -318,6 +408,8 @@ body {
 }
 .btn-primary { background: var(--blue); color: var(--white); }
 .btn-primary:hover { background: var(--blue-deep); }
+.btn-success { background: var(--success); color: var(--white); }
+.btn-success:hover { background: #1B5E20; }
 .btn-outline { background: var(--white); border: 1px solid var(--line-strong); color: var(--navy); }
 .btn-outline:hover { background: var(--soft); }
 
@@ -339,51 +431,38 @@ th {
   color: var(--navy);
   font-family: 'Manrope', sans-serif;
   font-weight: 700;
-  font-size: 11.5px;
+  font-size: 11px;
   letter-spacing: .05em;
   text-transform: uppercase;
-  padding: 12px 16px;
+  padding: 10px 14px;
   border-bottom: 1px solid var(--line);
   white-space: nowrap;
 }
 td {
-  padding: 14px 16px;
+  padding: 12px 14px;
   border-bottom: 1px solid var(--line);
   vertical-align: middle;
 }
 tr:hover td {
-  background: #F9FBFE;
-}
-.lead-link {
-  font-family: 'Manrope', sans-serif;
-  font-weight: 700;
-  color: var(--blue);
-  cursor: pointer;
-  border: none;
-  background: none;
-  padding: 0;
-  text-decoration: underline;
+  background: rgba(244, 248, 252, 0.6);
 }
 
-/* Status Badges */
+/* Badges */
 .badge {
   display: inline-flex;
   align-items: center;
   gap: 4px;
-  padding: 3px 8px;
+  padding: 2px 8px;
   border-radius: 999px;
-  font-size: 11px;
+  font-size: 10.5px;
   font-weight: 700;
-  white-space: nowrap;
+  letter-spacing: .02em;
 }
-.badge-new { background: #E3F2FD; color: #1565C0; }
-.badge-contacted { background: #FFF3E0; color: #E65100; }
-.badge-qualified { background: #E8F5E9; color: #2E7D32; }
-.badge-ineligible { background: #FFEBEE; color: #C62828; }
-.badge-synced { background: #E8F5E9; color: #2E7D32; }
-.badge-pending { background: #FFF8E1; color: #F57F17; }
-.badge-failed { background: #FFEBEE; color: #C62828; }
-.badge-unconfigured { background: #ECEFF1; color: #546E7A; }
+.badge-synced { background: rgba(46, 125, 50, 0.12); color: var(--success); }
+.badge-pending { background: rgba(237, 108, 2, 0.12); color: var(--warning); }
+.badge-failed { background: rgba(211, 47, 47, 0.12); color: var(--danger); }
+.badge-new { background: rgba(23, 105, 170, 0.12); color: var(--blue); }
+.badge-unconfigured { background: rgba(6, 47, 82, 0.08); color: var(--muted); }
 
 /* Pagination */
 .pagination-bar {
@@ -391,11 +470,11 @@ tr:hover td {
   border-radius: 0 0 var(--radius) var(--radius);
   border: 1px solid var(--line);
   border-top: none;
-  padding: 12px 20px;
+  padding: 12px 18px;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  font-size: 13px;
+  font-size: 12.5px;
   color: var(--muted);
 }
 .pagination-btns {
@@ -403,10 +482,13 @@ tr:hover td {
   gap: 8px;
 }
 .btn-page {
-  padding: 6px 12px;
+  padding: 4px 10px;
   border-radius: 6px;
   border: 1px solid var(--line-strong);
   background: var(--white);
+  color: var(--navy);
+  font-size: 12px;
+  font-weight: 600;
   cursor: pointer;
 }
 .btn-page:disabled {
@@ -414,95 +496,96 @@ tr:hover td {
   cursor: not-allowed;
 }
 
-/* Notice / Limitation Callout */
-.notice-box {
-  background: #FFFDE7;
-  border-left: 4px solid var(--yellow-deep);
-  padding: 14px 18px;
-  border-radius: 0 8px 8px 0;
-  margin-bottom: 20px;
-  font-size: 13px;
-  line-height: 1.5;
-  color: #5D4037;
+/* Live Indicator */
+.live-indicator {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--success);
+  background: rgba(46, 125, 50, 0.1);
+  padding: 4px 10px;
+  border-radius: 999px;
+  border: 1px solid rgba(46, 125, 50, 0.25);
+}
+.live-pulse {
+  width: 7px;
+  height: 7px;
+  background: var(--success);
+  border-radius: 50%;
+  animation: livePulse 1.8s infinite;
+}
+@keyframes livePulse {
+  0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(46, 125, 50, 0.6); }
+  70% { transform: scale(1.1); box-shadow: 0 0 0 6px rgba(46, 125, 50, 0); }
+  100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(46, 125, 50, 0); }
 }
 
-/* Modal Detail View */
+/* Modal Drawer */
 .modal-backdrop {
+  display: none;
   position: fixed;
   inset: 0;
-  background: rgba(4, 24, 43, 0.75);
-  backdrop-filter: blur(8px);
+  background: rgba(4, 24, 43, 0.55);
+  backdrop-filter: blur(4px);
   z-index: 1000;
-  display: flex;
   align-items: center;
   justify-content: center;
-  padding: 20px;
-  opacity: 0;
-  visibility: hidden;
-  transition: all .25s var(--ease);
+  padding: 16px;
 }
-.modal-backdrop.is-active {
-  opacity: 1;
-  visibility: visible;
-}
+.modal-backdrop.is-active { display: flex; }
 .modal-card {
-  background: var(--white);
-  width: 100%;
-  max-width: 640px;
-  max-height: 90vh;
+  background: #fff;
   border-radius: var(--radius-lg);
-  box-shadow: var(--shadow-lg);
+  max-width: 680px;
+  width: 100%;
+  padding: 24px;
+  max-height: 90vh;
   overflow-y: auto;
-  padding: 28px;
   position: relative;
+  box-shadow: var(--shadow-lg);
 }
 .modal-close {
   position: absolute;
-  top: 20px;
-  right: 20px;
-  border: none;
+  top: 16px;
+  right: 16px;
   background: var(--soft);
-  width: 32px;
-  height: 32px;
+  border: 1px solid var(--line);
+  font-size: 18px;
+  line-height: 1;
+  width: 28px;
+  height: 28px;
   border-radius: 50%;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
+  color: var(--muted);
 }
 .detail-grid {
   display: grid;
   grid-template-columns: 140px 1fr;
-  gap: 10px 16px;
-  margin-top: 18px;
-  font-size: 13.5px;
+  gap: 8px 14px;
+  font-size: 13px;
+  margin-top: 14px;
 }
-.detail-label {
-  font-weight: 700;
-  color: var(--muted);
-}
-.detail-val {
-  color: var(--navy);
-  word-break: break-word;
-}
+.detail-label { color: var(--muted); font-weight: 600; }
+.detail-val { color: var(--navy); word-break: break-all; }
+
+/* Spinners */
 .table-spinner {
   display: inline-block;
-  width: 16px;
-  height: 16px;
-  border: 2.5px solid rgba(6, 47, 82, 0.18);
+  width: 14px;
+  height: 14px;
+  border: 2px solid rgba(23, 105, 170, 0.2);
   border-top-color: var(--blue);
   border-radius: 50%;
-  animation: adminSpin 0.75s linear infinite;
+  animation: spin 0.7s linear infinite;
   vertical-align: middle;
-  margin-right: 8px;
+  margin-right: 6px;
 }
-@keyframes adminSpin {
-  to { transform: rotate(360deg); }
-}
-.btn-loading {
-  opacity: 0.65;
-  pointer-events: none;
-}
+@keyframes spin { to { transform: rotate(360deg); } }
 </style>
 </head>
 <body>
@@ -518,9 +601,9 @@ tr:hover td {
   </a>
 
   <div class="header-actions">
-    <span class="badge-admin">Authenticated Admin</span>
+    <span class="badge-admin">Live Admin Session</span>
     <button type="button" class="btn-header" id="refreshBtn" title="Refresh data">
-      <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.3"><path d="M23 4v6h-6M1 20v-6h6"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+      <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.3"><path d="M23 4v6h-6M1 20v-6h6"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
       <span>Refresh</span>
     </button>
     <button type="button" class="btn-header" id="logoutBtn" title="Sign out">
@@ -529,90 +612,189 @@ tr:hover td {
   </div>
 </header>
 
-<!-- Tabs -->
+<!-- Streamlined 4-Tab Navigation -->
 <nav class="admin-nav" role="tablist">
-  <button class="nav-tab is-active" data-target="pane-overview" role="tab">Overview / Metrics</button>
-  <button class="nav-tab" data-target="pane-leads" role="tab">Leads Management</button>
-  <button class="nav-tab" data-target="pane-traffic" role="tab">Traffic &amp; Sources</button>
-  <button class="nav-tab" data-target="pane-meta" role="tab">Meta Ads Analytics</button>
-  <button class="nav-tab" data-target="pane-geography" role="tab">Geography &amp; Schools</button>
-  <button class="nav-tab" data-target="pane-integrations" role="tab">Integrations &amp; Health</button>
+  <button class="nav-tab is-active" data-target="pane-overview" role="tab">
+    📊 Overview &amp; Analytics
+  </button>
+  <button class="nav-tab" data-target="pane-leads" role="tab">
+    👥 Leads Management
+  </button>
+  <button class="nav-tab" data-target="pane-meta" role="tab">
+    🎯 Meta Ads Intelligence
+  </button>
+  <button class="nav-tab" data-target="pane-integrations" role="tab">
+    ⚡ Integrations &amp; Health
+  </button>
 </nav>
 
 <main class="admin-main">
 
   <!-- ========================================================
-       TAB 1: OVERVIEW / METRICS
+       TAB 1: OVERVIEW & ANALYTICS
        ======================================================== -->
   <section class="tab-pane is-active" id="pane-overview">
+    
+    <!-- Time Horizon Filter Toolbar -->
+    <div class="filter-toolbar">
+      <div class="time-preset-group">
+        <span style="font-size:12.5px;font-weight:700;color:var(--navy);margin-right:4px;">Time Horizon:</span>
+        <button type="button" class="btn-time-preset is-active" data-period="today">Today</button>
+        <button type="button" class="btn-time-preset" data-period="7d">Last 7 Days</button>
+        <button type="button" class="btn-time-preset" data-period="30d">Last 30 Days</button>
+        <button type="button" class="btn-time-preset" data-period="6m">Last 6 Months</button>
+        <button type="button" class="btn-time-preset" data-period="custom">Custom Range</button>
+      </div>
+
+      <div class="custom-date-box" id="overviewCustomRangeBox" style="display:none;">
+        <span style="font-size:12px;font-weight:600;color:var(--muted);">From:</span>
+        <input type="date" id="overviewCustomStart" class="form-date" />
+        <span style="font-size:12px;font-weight:600;color:var(--muted);">To:</span>
+        <input type="date" id="overviewCustomEnd" class="form-date" />
+        <button type="button" class="btn-action btn-primary" id="btnApplyOverviewCustom">Apply Range</button>
+      </div>
+
+      <div style="display:flex;align-items:center;gap:10px;">
+        <span style="font-size:12px;color:var(--muted);font-weight:600;" id="overviewActiveRangeText">Showing: Today</span>
+        <div class="live-indicator">
+          <span class="live-pulse"></span>
+          <span>Live Tracking Active</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- 5 Top Key Performance Cards -->
     <div class="metrics-grid">
       <div class="metric-card">
-        <span class="label">Total School Leads</span>
-        <span class="val" id="metricTotal">0</span>
-        <span class="desc">All-time primary database records</span>
+        <span class="label">Leads Received</span>
+        <span class="val" id="metricLeadsRange" style="color:var(--blue);">0</span>
+        <span class="desc" id="metricLeadsSubtext">Today: 0 | Total All-Time: 0</span>
       </div>
-      <div class="metric-card">
-        <span class="label">Leads Received Today</span>
-        <span class="val" id="metricToday" style="color:var(--blue);">0</span>
-        <span class="desc">Since 00:00 UTC</span>
+
+      <div class="metric-card card-accent-gold">
+        <span class="label">Website Visitors</span>
+        <span class="val" id="metricVisitorsRange">0</span>
+        <span class="desc" id="metricVisitorsSubtext">Unique visitors in period</span>
       </div>
-      <div class="metric-card">
-        <span class="label">Leads in Last 30 Days</span>
-        <span class="val" id="metricRange">0</span>
-        <span class="desc">Rolling 30-day window</span>
+
+      <div class="metric-card card-accent-green">
+        <span class="label">Conversion Rate</span>
+        <span class="val" id="metricConversionRate" style="color:var(--success);">0.0%</span>
+        <span class="desc">Visitors converted to applicants</span>
       </div>
-      <div class="metric-card">
+
+      <div class="metric-card card-accent-purple">
+        <span class="label">Avg Site Dwell Time</span>
+        <span class="val" id="metricAvgDuration">0s</span>
+        <span class="desc" id="metricAvgScroll">Avg Scroll Depth: 0%</span>
+      </div>
+
+      <div class="metric-card card-accent-orange">
         <span class="label">Duplicate Suspects</span>
         <span class="val" id="metricDuplicates" style="color:var(--warning);">0</span>
         <span class="desc">Retries within 15 mins (flagged)</span>
       </div>
     </div>
 
-    <div class="charts-grid">
+    <!-- Analytics Breakdown Grid -->
+    <div class="panel-grid">
       <div class="panel-card">
-        <h3 class="panel-title">Leads by School Role</h3>
-        <div class="list-breakdown" id="roleBreakdownList">
-          <p class="desc">Loading role metrics...</p>
+        <h3 class="panel-title">
+          <span>Traffic Origin &amp; Acquisition Channel</span>
+          <small>In-App / Referral / Direct</small>
+        </h3>
+        <div class="list-breakdown" id="overviewSourcesList">
+          <p class="desc" style="color:var(--muted);font-size:12.5px;padding:8px 0;">No traffic sources recorded yet.</p>
         </div>
       </div>
 
       <div class="panel-card">
-        <h3 class="panel-title">Leads by Source / Channel</h3>
-        <div class="list-breakdown" id="sourceBreakdownList">
-          <p class="desc">Loading attribution metrics...</p>
+        <h3 class="panel-title">
+          <span>Leads by School Role</span>
+          <small>Applicant Representation</small>
+        </h3>
+        <div class="list-breakdown" id="overviewRolesList">
+          <p class="desc" style="color:var(--muted);font-size:12.5px;padding:8px 0;">No leads recorded in this period.</p>
+        </div>
+      </div>
+
+      <div class="panel-card">
+        <h3 class="panel-title">
+          <span>Application Processing Status</span>
+          <small>Pipeline Stage</small>
+        </h3>
+        <div class="list-breakdown" id="overviewStatusList">
+          <p class="desc" style="color:var(--muted);font-size:12.5px;padding:8px 0;">No status records yet.</p>
+        </div>
+      </div>
+
+      <div class="panel-card">
+        <h3 class="panel-title">
+          <span>Top UTM Campaigns</span>
+          <small>Performance by Campaign</small>
+        </h3>
+        <div class="list-breakdown" id="overviewCampaignsList">
+          <p class="desc" style="color:var(--muted);font-size:12.5px;padding:8px 0;">No campaigns recorded yet.</p>
         </div>
       </div>
     </div>
 
-    <div class="charts-grid">
+    <!-- Reader Engagement Heatmap & Top Cities Grid -->
+    <div class="panel-grid" style="grid-template-columns: 2fr 1fr;">
+      
+      <!-- Section Heatmap -->
       <div class="panel-card">
-        <h3 class="panel-title">Top UTM Campaigns</h3>
-        <div class="list-breakdown" id="campaignBreakdownList">
-          <p class="desc">Loading campaign metrics...</p>
+        <h3 class="panel-title">
+          <span>Landing Page Section Engagement &amp; Dwell Heatmap</span>
+          <small>Ranked by dwell time</small>
+        </h3>
+        <p style="font-size:12.5px;color:var(--muted);margin-bottom:14px;">
+          Measures what parts of the landing page school leaders examine before applying for the grant.
+        </p>
+        <div class="table-wrap" style="box-shadow:none;border-radius:8px;">
+          <table>
+            <thead>
+              <tr>
+                <th style="width:34%;">Landing Page Section</th>
+                <th style="width:20%;">Total Dwell</th>
+                <th style="width:16%;">Views</th>
+                <th style="width:30%;">Attention Weight</th>
+              </tr>
+            </thead>
+            <tbody id="overviewHeatmapBody">
+              <tr><td colspan="4" style="text-align:center;padding:20px;color:var(--muted);">No section dwell records yet.</td></tr>
+            </tbody>
+          </table>
         </div>
       </div>
 
+      <!-- Top Cities -->
       <div class="panel-card">
-        <h3 class="panel-title">Application Status</h3>
-        <div class="list-breakdown" id="statusBreakdownList">
-          <p class="desc">Loading status metrics...</p>
+        <h3 class="panel-title">
+          <span>Top Visitor &amp; Applicant Cities</span>
+          <small>Geography</small>
+        </h3>
+        <div class="list-breakdown" id="overviewCitiesList" style="max-height:310px;overflow-y:auto;">
+          <p class="desc" style="color:var(--muted);font-size:12.5px;padding:8px 0;">No city records yet.</p>
         </div>
       </div>
+
     </div>
+
   </section>
 
   <!-- ========================================================
-       TAB 2: LEADS MANAGEMENT TABLE
+       TAB 2: LEADS MANAGEMENT
        ======================================================== -->
   <section class="tab-pane" id="pane-leads">
     <div class="table-controls">
       <div class="search-wrap">
-        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-        <input type="text" id="searchInput" placeholder="Search name, phone, email, school, city..." />
+        <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        <input type="text" id="leadsSearchInput" placeholder="Search applicant, phone, email, school, city..." />
       </div>
 
       <div class="filter-group">
-        <select class="filter-select" id="roleFilter">
+        <select class="filter-select" id="leadsRoleFilter">
           <option value="">All Roles</option>
           <option value="Principal">Principal</option>
           <option value="School Director / Management">School Director / Management</option>
@@ -622,7 +804,7 @@ tr:hover td {
           <option value="Other">Other</option>
         </select>
 
-        <select class="filter-select" id="statusFilter">
+        <select class="filter-select" id="leadsStatusFilter">
           <option value="">All Statuses</option>
           <option value="NEW">NEW</option>
           <option value="CONTACTED">CONTACTED</option>
@@ -631,7 +813,7 @@ tr:hover td {
           <option value="ARCHIVED">ARCHIVED</option>
         </select>
 
-        <select class="filter-select" id="gsheetFilter">
+        <select class="filter-select" id="leadsSheetFilter">
           <option value="">All Sheet Sync</option>
           <option value="SYNCED">SYNCED</option>
           <option value="PENDING">PENDING</option>
@@ -639,7 +821,7 @@ tr:hover td {
           <option value="NOT_CONFIGURED">NOT_CONFIGURED</option>
         </select>
 
-        <select class="filter-select" id="crmFilter">
+        <select class="filter-select" id="leadsCrmFilter">
           <option value="">All CRM Sync</option>
           <option value="SYNCED">SYNCED</option>
           <option value="PENDING">PENDING</option>
@@ -647,12 +829,12 @@ tr:hover td {
           <option value="NOT_CONFIGURED">NOT_CONFIGURED</option>
         </select>
 
-        <button type="button" class="btn-action btn-outline" id="exportCsvBtn">
+        <button type="button" class="btn-action btn-success" id="exportLeadsCsvBtn" title="Export all filtered leads to CSV">
           <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
           <span>Export CSV</span>
         </button>
 
-        <button type="button" class="btn-action btn-primary" id="retryAllSyncBtn">
+        <button type="button" class="btn-action btn-outline" id="retryAllSyncBtn" title="Retry pending or failed syncs">
           <span>Retry Syncs</span>
         </button>
       </div>
@@ -670,188 +852,335 @@ tr:hover td {
             <th>Status</th>
             <th>Sheets Sync</th>
             <th>CRM Sync</th>
-            <th>Actions</th>
+            <th>Action</th>
           </tr>
         </thead>
         <tbody id="leadsTableBody">
-          <tr><td colspan="9" style="text-align:center;padding:32px;">Loading leads from primary database...</td></tr>
+          <tr><td colspan="9" style="text-align:center;padding:32px;color:var(--muted);"><span class="table-spinner"></span>Loading leads...</td></tr>
         </tbody>
       </table>
     </div>
 
     <div class="pagination-bar">
-      <span id="pageInfo">Showing 0 of 0 leads</span>
+      <span id="leadsPageInfo">Showing 0 of 0 leads</span>
       <div class="pagination-btns">
-        <button type="button" class="btn-page" id="prevPageBtn" disabled>&larr; Prev</button>
-        <button type="button" class="btn-page" id="nextPageBtn" disabled>Next &rarr;</button>
+        <button type="button" class="btn-page" id="leadsPrevBtn" disabled>&larr; Prev</button>
+        <button type="button" class="btn-page" id="leadsNextBtn" disabled>Next &rarr;</button>
       </div>
     </div>
   </section>
 
   <!-- ========================================================
-       TAB 3: TRAFFIC & SOURCES
-       ======================================================== -->
-  <section class="tab-pane" id="pane-traffic">
-    <div class="notice-box">
-      <strong>Attribution Methodology Notice:</strong><br>
-      Attribution dimensions are calculated strictly from landing-page query parameters (UTM parameters, Meta <code>fbclid</code>) and HTTP referrers captured upon enquiry submission. No unconsented IP fingerprinting or speculative analytics are used.
-    </div>
-
-    <div class="charts-grid">
-      <div class="panel-card">
-        <h3 class="panel-title">Channels / Traffic Source Breakdown</h3>
-        <div class="list-breakdown" id="trafficChannelsList"></div>
-      </div>
-
-      <div class="panel-card">
-        <h3 class="panel-title">UTM Campaign Performance</h3>
-        <div class="list-breakdown" id="trafficCampaignsList"></div>
-      </div>
-    </div>
-  </section>
-
-  <!-- ========================================================
-       TAB 4: META ADS ANALYTICS
+       TAB 3: META ADS INTELLIGENCE
        ======================================================== -->
   <section class="tab-pane" id="pane-meta">
-    <div class="notice-box">
-      <strong>Meta Ads Analytics Distinction:</strong><br>
-      <strong>A. Website-side Meta Attribution (Active):</strong> Leads carrying Meta click IDs (<code>fbclid</code>) and campaign tags are tracked below.<br>
-      <strong>B. Meta Ads Account Metrics (Spend, CPM, CTR):</strong> Requires authenticated Meta Marketing API credentials configured in <code>.env</code>.
-    </div>
-
-    <div class="metrics-grid">
-      <div class="metric-card">
-        <span class="label">Meta-Attributed Leads</span>
-        <span class="val" id="metaTotalLeads">0</span>
-        <span class="desc">Leads with Meta UTMs or fbclid</span>
+    
+    <!-- Meta Campaign Explorer Card -->
+    <div class="panel-card" style="margin-bottom:20px;border-top:3px solid #1877F2;">
+      <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:12px;">
+        <div style="display:flex;align-items:center;gap:8px;">
+          <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="#1877F2" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M16 12l-4-4-4 4M12 16V8"/></svg>
+          <h3 style="font-family:'Manrope',sans-serif;font-size:16px;font-weight:800;color:var(--navy);margin:0;">
+            Live Campaign Intelligence Explorer (Track Any Campaign by ID)
+          </h3>
+        </div>
+        <div style="display:flex;gap:8px;align-items:center;">
+          <span class="badge badge-synced">Meta Marketing API Connected</span>
+          <span class="badge" style="background:#eef2f6;color:var(--navy);border:1px solid var(--line);">Form C Filter Active</span>
+        </div>
       </div>
-      <div class="metric-card">
-        <span class="label">With Verified fbclid</span>
-        <span class="val" id="metaClickIdLeads">0</span>
-        <span class="desc">Direct click-through conversions</span>
-      </div>
-      <div class="metric-card">
-        <span class="label">Marketing API Status</span>
-        <span class="val" style="font-size:18px;color:var(--muted);" id="metaApiStatusBadge">Awaiting Config</span>
-        <span class="desc">Spend &amp; impression metrics</span>
-      </div>
-    </div>
-
-    <div class="panel-card" style="margin-bottom:24px;">
-      <h3 class="panel-title">Meta Ads Manager Connection Checklist</h3>
-      <p style="font-size:13.5px;color:var(--muted);line-height:1.6;margin-bottom:14px;">
-        To display Ad Spend, Reach, Impressions, Frequency, CPM, and CPC inside this dashboard:
+      
+      <p style="font-size:13px;color:var(--muted);margin-bottom:14px;">
+        Select an active campaign or enter <b>any Campaign ID</b> to inspect spend, clicks, reach, individual ads (AD 01, AD 02, etc.), and landing page traffic in real time.
       </p>
-      <ol style="font-size:13px;line-height:1.8;padding-left:22px;color:var(--text);">
-        <li>Register a Meta App at <code>developers.facebook.com</code> with Marketing API access.</li>
-        <li>Generate a System User Token with <code>ads_read</code> permission.</li>
-        <li>Set <code>META_AD_ACCOUNT_ID=act_&lt;your_id&gt;</code> and <code>META_ACCESS_TOKEN=&lt;token&gt;</code> in <code>.env</code>.</li>
-        <li>Live spend and campaign ROI will automatically render in this panel.</li>
-      </ol>
-    </div>
 
-    <div class="panel-card">
-      <h3 class="panel-title">Meta Campaigns Leading to Submissions</h3>
-      <div class="list-breakdown" id="metaCampaignList">
-        <p class="desc">No Meta-attributed leads recorded yet.</p>
+      <div style="display:flex;align-items:flex-end;gap:12px;flex-wrap:wrap;background:var(--soft);padding:14px;border-radius:8px;border:1px solid var(--line);">
+        <div style="flex:2;min-width:240px;">
+          <label style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;display:block;margin-bottom:5px;">Select Campaign from Ad Account:</label>
+          <select id="metaCampaignSelect" class="filter-select" style="width:100%;padding:8px 10px;font-weight:600;">
+            <option value="">Loading campaigns from Meta...</option>
+          </select>
+        </div>
+
+        <div style="flex:1;min-width:180px;">
+          <label style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;display:block;margin-bottom:5px;">Or Enter Custom Campaign ID:</label>
+          <input type="text" id="metaCampaignIdInput" class="filter-select" placeholder="e.g. 120248039512450384" style="width:100%;padding:8px 10px;" />
+        </div>
+
+        <div style="min-width:140px;">
+          <label style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;display:block;margin-bottom:5px;">Date Range:</label>
+          <select id="metaDatePresetSelect" class="filter-select" style="width:100%;padding:8px 10px;">
+            <option value="maximum" selected>Maximum (All Time)</option>
+            <option value="last_30d">Last 30 Days</option>
+            <option value="last_7d">Last 7 Days</option>
+            <option value="today">Today</option>
+          </select>
+        </div>
+
+        <button type="button" id="btnTrackCampaign" class="btn-action btn-primary" style="padding:9px 18px;">
+          <span>Track Campaign</span>
+        </button>
+      </div>
+
+      <!-- Live Campaign Analytics Output Box -->
+      <div id="campaignAnalyticsResultBox" style="display:none;margin-top:16px;">
+        <div style="background:#fff;border:1px solid var(--line);border-radius:8px;padding:16px;margin-bottom:14px;">
+          <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:12px;">
+            <div>
+              <span id="campResultBadge" class="badge badge-synced" style="margin-right:6px;">ACTIVE</span>
+              <b id="campResultName" style="font-size:16px;color:var(--navy);">-</b>
+              <span style="font-size:12px;color:var(--muted);margin-left:8px;">ID: <code id="campResultId">-</code></span>
+            </div>
+            <span id="campResultObjective" style="font-size:11px;font-weight:700;color:var(--blue);background:rgba(23,105,170,0.08);padding:3px 8px;border-radius:4px;">OUTCOME_LEADS</span>
+          </div>
+
+          <!-- Campaign Top Metrics -->
+          <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(130px, 1fr));gap:10px;">
+            <div style="background:var(--soft);padding:10px 12px;border-radius:6px;">
+              <span style="font-size:11px;color:var(--muted);text-transform:uppercase;font-weight:700;display:block;">Ad Spend</span>
+              <b id="campMetricSpend" style="font-size:17px;color:var(--navy);">₹0.00</b>
+            </div>
+            <div style="background:var(--soft);padding:10px 12px;border-radius:6px;">
+              <span style="font-size:11px;color:var(--muted);text-transform:uppercase;font-weight:700;display:block;">Impressions</span>
+              <b id="campMetricImpressions" style="font-size:17px;color:var(--navy);">0</b>
+            </div>
+            <div style="background:var(--soft);padding:10px 12px;border-radius:6px;">
+              <span style="font-size:11px;color:var(--muted);text-transform:uppercase;font-weight:700;display:block;">Reach</span>
+              <b id="campMetricReach" style="font-size:17px;color:var(--navy);">0</b>
+            </div>
+            <div style="background:var(--soft);padding:10px 12px;border-radius:6px;">
+              <span style="font-size:11px;color:var(--muted);text-transform:uppercase;font-weight:700;display:block;">Total Clicks</span>
+              <b id="campMetricClicks" style="font-size:17px;color:var(--blue);">0</b>
+            </div>
+            <div style="background:var(--soft);padding:10px 12px;border-radius:6px;">
+              <span style="font-size:11px;color:var(--muted);text-transform:uppercase;font-weight:700;display:block;">Average CPC</span>
+              <b id="campMetricCpc" style="font-size:17px;color:var(--navy);">₹0.00</b>
+            </div>
+            <div style="background:var(--soft);padding:10px 12px;border-radius:6px;">
+              <span style="font-size:11px;color:var(--muted);text-transform:uppercase;font-weight:700;display:block;">Click Rate (CTR)</span>
+              <b id="campMetricCtr" style="font-size:17px;color:var(--success);">0.00%</b>
+            </div>
+          </div>
+        </div>
+
+        <!-- Ads Performance Table -->
+        <div style="background:#fff;border:1px solid var(--line);border-radius:8px;padding:16px;">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
+            <h4 style="font-size:14px;font-weight:800;color:var(--navy);margin:0;">
+              Ads &amp; Creative Breakdown (e.g. AD 01, AD 02, AD 03)
+            </h4>
+            <span id="campAdsCountBadge" class="badge" style="background:var(--soft);color:var(--navy);font-weight:700;">0 Ads</span>
+          </div>
+          <div class="table-wrap" style="box-shadow:none;border-radius:6px;">
+            <table>
+              <thead>
+                <tr>
+                  <th>Ad Name &amp; ID</th>
+                  <th>Target Ad Set</th>
+                  <th>Spend</th>
+                  <th>Impressions</th>
+                  <th>Clicks</th>
+                  <th>CPC</th>
+                  <th>CTR</th>
+                </tr>
+              </thead>
+              <tbody id="campAdsTableBody">
+                <tr><td colspan="7" style="text-align:center;padding:16px;color:var(--muted);">Select or enter a campaign to view ad-level results.</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
       </div>
     </div>
-  </section>
 
-  <!-- ========================================================
-       TAB 5: GEOGRAPHY & SCHOOLS
-       ======================================================== -->
-  <section class="tab-pane" id="pane-geography">
-    <div class="notice-box">
-      <strong>Submitted Data Disclaimer:</strong><br>
-      The city/district and school names shown below reflect the exact values entered by school applicants in the form. They are not inferred from IP geolocation and have not yet undergone formal accreditation verification.
-    </div>
+    <!-- Dual Campaign Side-by-Side View -->
+    <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(360px, 1fr));gap:20px;">
+      
+      <!-- Campaign 1: Instant Forms -->
+      <div class="panel-card" style="border-top:3px solid var(--blue);">
+        <div style="border-bottom:1px solid var(--line);padding-bottom:10px;margin-bottom:12px;">
+          <div style="display:flex;align-items:center;justify-content:space-between;">
+            <h3 style="font-family:'Manrope',sans-serif;font-size:15px;font-weight:800;color:var(--navy);margin:0;">
+              Campaign 1: Meta Instant Forms (On-Platform)
+            </h3>
+            <span class="badge badge-synced">Form C Only</span>
+          </div>
+          <p style="font-size:12px;color:var(--muted);margin-top:4px;">
+            Leads submitted directly inside Instagram/Facebook forms. Automatically forwarded to Google Sheets and LeadsZone CRM.
+          </p>
+        </div>
 
-    <div class="charts-grid">
-      <div class="panel-card">
-        <h3 class="panel-title">Submitted Cities / Districts</h3>
-        <div class="list-breakdown" id="cityList">
-          <p class="desc">Loading geography...</p>
+        <div style="display:flex;gap:10px;margin-bottom:14px;">
+          <div style="background:var(--soft);padding:8px 12px;border-radius:6px;flex:1;">
+            <span style="font-size:11px;color:var(--muted);font-weight:700;display:block;">Total Leads</span>
+            <b id="metaInstantTotal" style="font-size:20px;color:var(--blue);">0</b>
+          </div>
+          <div style="background:var(--soft);padding:8px 12px;border-radius:6px;flex:1;">
+            <span style="font-size:11px;color:var(--muted);font-weight:700;display:block;">Today</span>
+            <b id="metaInstantToday" style="font-size:20px;color:var(--navy);">0</b>
+          </div>
+          <div style="background:var(--soft);padding:8px 12px;border-radius:6px;flex:1;">
+            <span style="font-size:11px;color:var(--muted);font-weight:700;display:block;">Sync Rate</span>
+            <b id="metaInstantSyncRate" style="font-size:16px;color:var(--success);">100%</b>
+          </div>
+        </div>
+
+        <h4 style="font-size:13px;font-weight:700;color:var(--navy);margin-bottom:8px;">Recent Form C Applications</h4>
+        <div class="table-wrap" style="max-height:280px;overflow-y:auto;box-shadow:none;border-radius:6px;">
+          <table>
+            <thead>
+              <tr>
+                <th>Applicant</th>
+                <th>Phone / Email</th>
+                <th>School &amp; City</th>
+                <th>Sync Status</th>
+              </tr>
+            </thead>
+            <tbody id="metaInstantLeadsBody">
+              <tr><td colspan="4" style="text-align:center;padding:16px;color:var(--muted);">No Instant Form leads in this period.</td></tr>
+            </tbody>
+          </table>
         </div>
       </div>
 
-      <div class="panel-card">
-        <h3 class="panel-title">Submitted School Enquiries</h3>
-        <div class="list-breakdown" id="schoolList">
-          <p class="desc">Loading schools...</p>
+      <!-- Campaign 2: Website Traffic -->
+      <div class="panel-card" style="border-top:3px solid var(--success);">
+        <div style="border-bottom:1px solid var(--line);padding-bottom:10px;margin-bottom:12px;">
+          <div style="display:flex;align-items:center;justify-content:space-between;">
+            <h3 style="font-family:'Manrope',sans-serif;font-size:15px;font-weight:800;color:var(--navy);margin:0;">
+              Campaign 2: Website Visits (event.mymentorcircle.com)
+            </h3>
+            <span class="badge badge-synced">On-Site Traffic</span>
+          </div>
+          <p style="font-size:12px;color:var(--muted);margin-top:4px;">
+            Visitors clicking from Instagram/Facebook to <b>event.mymentorcircle.com</b>, studying grant sections and applying on-site.
+          </p>
+        </div>
+
+        <div style="display:flex;gap:10px;margin-bottom:14px;">
+          <div style="background:var(--soft);padding:8px 12px;border-radius:6px;flex:1;">
+            <span style="font-size:11px;color:var(--muted);font-weight:700;display:block;">Ad Clicks</span>
+            <b id="metaWebClicks" style="font-size:20px;color:var(--navy);">0</b>
+          </div>
+          <div style="background:var(--soft);padding:8px 12px;border-radius:6px;flex:1;">
+            <span style="font-size:11px;color:var(--muted);font-weight:700;display:block;">Unique Visitors</span>
+            <b id="metaWebUnique" style="font-size:20px;color:var(--blue);">0</b>
+          </div>
+          <div style="background:var(--soft);padding:8px 12px;border-radius:6px;flex:1;">
+            <span style="font-size:11px;color:var(--muted);font-weight:700;display:block;">Conversions</span>
+            <b id="metaWebConversions" style="font-size:20px;color:var(--success);">0</b>
+          </div>
+        </div>
+
+        <h4 style="font-size:13px;font-weight:700;color:var(--navy);margin-bottom:8px;">Live Meta Ad Visitors Stream</h4>
+        <div class="table-wrap" style="max-height:280px;overflow-y:auto;box-shadow:none;border-radius:6px;">
+          <table>
+            <thead>
+              <tr>
+                <th>Arrival Time</th>
+                <th>Location</th>
+                <th>App / Device</th>
+                <th>Dwell</th>
+                <th>Outcome</th>
+              </tr>
+            </thead>
+            <tbody id="metaWebSessionsBody">
+              <tr><td colspan="5" style="text-align:center;padding:16px;color:var(--muted);">No Meta website visitors recorded yet.</td></tr>
+            </tbody>
+          </table>
         </div>
       </div>
+
     </div>
+
   </section>
 
   <!-- ========================================================
-       TAB 6: INTEGRATIONS & HEALTH
+       TAB 4: INTEGRATIONS & HEALTH
        ======================================================== -->
   <section class="tab-pane" id="pane-integrations">
-    <div class="charts-grid">
+    
+    <div class="panel-grid">
+      
+      <!-- Google Sheets Card -->
       <div class="panel-card">
-        <h3 class="panel-title" id="dbHeaderTitle">Primary Database Architecture</h3>
-        <div class="detail-grid">
-          <span class="detail-label">Database Engine:</span>
-          <span class="detail-val" id="dbTypeVal">Cloudflare D1 / SQLite</span>
-          <span class="detail-label">Database ID / Path:</span>
-          <span class="detail-val" id="dbPathVal">a63cfb65-eb51-4ade-86f7-0154c874fb17</span>
-          <span class="detail-label">Total Records:</span>
-          <span class="detail-val" id="dbRecordsVal">0</span>
-          <span class="detail-label">Database Status:</span>
-          <span class="detail-val" id="dbStatusVal"><span class="badge badge-synced">CONNECTED</span></span>
-          <span class="detail-label">Concurrency &amp; Mode:</span>
-          <span class="detail-val" id="dbConcurrencyVal">Edge Replicated WAL</span>
+        <h3 class="panel-title">
+          <span>Google Sheets Integration</span>
+          <span id="sheetsStatusVal"><span class="badge badge-synced">CONFIGURED</span></span>
+        </h3>
+        <p style="font-size:13px;color:var(--muted);line-height:1.5;margin-bottom:14px;">
+          Synchronizes all submitted grant leads into your connected Google Sheet in real time.
+        </p>
+        <div style="display:flex;gap:10px;align-items:center;">
+          <button type="button" class="btn-action btn-outline" id="testSheetsBtn">
+            <span>Test Sheets Ping</span>
+          </button>
         </div>
       </div>
 
+      <!-- LeadsZone CRM Card -->
       <div class="panel-card">
-        <h3 class="panel-title">Downstream Integrations Status</h3>
-        <div class="detail-grid">
-          <span class="detail-label">Google Sheets:</span>
-          <span class="detail-val" id="sheetsStatusVal"><span class="badge badge-unconfigured">NOT CONFIGURED</span></span>
-          <span class="detail-label">CRM Sync:</span>
-          <span class="detail-val" id="crmStatusVal"><span class="badge badge-unconfigured">NOT CONFIGURED</span></span>
-          <span class="detail-label">Data Retention:</span>
-          <span class="detail-val">730 Days (2 Years configurable in .env)</span>
-        </div>
-        <div style="margin-top:18px;display:flex;gap:10px;flex-wrap:wrap;">
-          <button type="button" class="btn-action btn-outline" id="testSheetsBtn">Test Sheets Ping</button>
-          <button type="button" class="btn-action btn-outline" id="testCrmBtn">Test LeadsZone CRM Ping</button>
+        <h3 class="panel-title">
+          <span>LeadsZone CRM Integration</span>
+          <span id="crmStatusVal"><span class="badge badge-synced">CONFIGURED</span></span>
+        </h3>
+        <p style="font-size:13px;color:var(--muted);line-height:1.5;margin-bottom:14px;">
+          Instantly routes leads to LeadsZone CRM for school advisor follow-up and pipeline assignment.
+        </p>
+        <div style="display:flex;gap:10px;align-items:center;">
+          <button type="button" class="btn-action btn-outline" id="testCrmBtn">
+            <span>Test CRM Ping</span>
+          </button>
         </div>
       </div>
+
+      <!-- Meta Marketing API & Webhook -->
+      <div class="panel-card">
+        <h3 class="panel-title">
+          <span>Meta Marketing API &amp; Webhook</span>
+          <span class="badge badge-synced">ACTIVE</span>
+        </h3>
+        <p style="font-size:13px;color:var(--muted);line-height:1.5;margin-bottom:14px;">
+          Ingests instant leads from Facebook / Instagram ads and pulls campaign analytics.
+        </p>
+        <div class="detail-grid" style="margin-top:0;">
+          <span class="detail-label">Whitelisted Form:</span>
+          <span class="detail-val"><b>Form C (1105883022363408)</b></span>
+          <span class="detail-label">Callback Route:</span>
+          <span class="detail-val"><code>/api/webhooks/meta</code></span>
+        </div>
+      </div>
+
+      <!-- Database Health & Verification -->
+      <div class="panel-card">
+        <h3 class="panel-title">
+          <span>Database Health &amp; Pipeline Test</span>
+          <span class="badge badge-synced">CONNECTED (WAL MODE)</span>
+        </h3>
+        <p style="font-size:13px;color:var(--muted);line-height:1.5;margin-bottom:14px;">
+          Verify end-to-end data saving, or reset test records before live launch.
+        </p>
+        <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;">
+          <button type="button" class="btn-action btn-primary" id="btnSendTestLead" title="Create a real test applicant to verify data fetching and counters">
+            <span>⚡ Send Test Lead</span>
+          </button>
+          <button type="button" class="btn-action btn-outline" style="color:var(--danger);border-color:var(--danger);" id="purgeDummyDataBtn" title="Reset test leads to 0 for production">
+            <span>🗑️ Purge Test Data</span>
+          </button>
+        </div>
+      </div>
+
     </div>
 
-    <div class="panel-card" style="margin-top:20px;">
-      <h3 class="panel-title">Recent Integration Audit Logs</h3>
-      <div class="table-wrap" style="max-height:300px;overflow-y:auto;">
-        <table>
-          <thead>
-            <tr>
-              <th>Lead ID</th>
-              <th>Target</th>
-              <th>Status</th>
-              <th>Duration</th>
-              <th>Attempted At</th>
-              <th>Error Summary</th>
-            </tr>
-          </thead>
-          <tbody id="syncLogsBody">
-            <tr><td colspan="6" style="text-align:center;padding:16px;">No synchronization attempts logged yet.</td></tr>
-          </tbody>
-        </table>
-      </div>
-    </div>
   </section>
 
 </main>
 
-<!-- Lead Details Drawer / Modal -->
+<!-- Lead Details Modal -->
 <div class="modal-backdrop" id="detailModal">
   <div class="modal-card">
     <button type="button" class="modal-close" id="closeDetailModal">&times;</button>
-    <h3 style="font-family:'Manrope',sans-serif;font-size:20px;font-weight:800;color:var(--navy);" id="detailModalTitle">Lead Details</h3>
+    <h3 style="font-family:'Manrope',sans-serif;font-size:18px;font-weight:800;color:var(--navy);" id="detailModalTitle">Lead Details</h3>
     <div class="detail-grid" id="detailModalBody"></div>
   </div>
 </div>
@@ -865,10 +1194,20 @@ tr:hover td {
     })[m]);
   }
 
-  let currentOffset = 0;
-  const PAGE_LIMIT = 20;
+  function formatDuration(sec) {
+    if (!sec || sec <= 0) return '0s';
+    if (sec < 60) return sec + 's';
+    const m = Math.floor(sec / 60);
+    const s = sec % 60;
+    return s > 0 ? `${m}m ${s}s` : `${m}m`;
+  }
 
-  // Tab Switching
+  // Active Global Period State
+  let currentPeriod = 'today';
+  let customStartDate = '';
+  let customEndDate = '';
+
+  // Tab Navigation
   const tabs = document.querySelectorAll('.nav-tab');
   const panes = document.querySelectorAll('.tab-pane');
 
@@ -882,147 +1221,263 @@ tr:hover td {
       const targetPane = document.getElementById(targetId);
       if (targetPane) targetPane.classList.add('is-active');
 
-      if (targetId === 'pane-geography') loadGeography();
+      if (targetId === 'pane-overview') loadOverview();
+      if (targetId === 'pane-leads') loadLeads();
       if (targetId === 'pane-meta') loadMetaAttribution();
       if (targetId === 'pane-integrations') loadIntegrations();
     });
   });
 
   // Logout Handler
-  document.getElementById('logoutBtn').addEventListener('click', async () => {
+  document.getElementById('logoutBtn')?.addEventListener('click', async () => {
     await fetch('/api/admin/logout', { method: 'POST' });
     window.location.href = '/admin/login';
   });
 
-  // Refresh Button
-  document.getElementById('refreshBtn').addEventListener('click', async () => {
+  // Refresh Handler
+  document.getElementById('refreshBtn')?.addEventListener('click', async () => {
     const btn = document.getElementById('refreshBtn');
     btn.classList.add('btn-loading');
-    const origText = btn.innerHTML;
+    const origHtml = btn.innerHTML;
     btn.innerHTML = '<span class="table-spinner" style="border-top-color:#fff;border-color:rgba(255,255,255,0.3);width:12px;height:12px;"></span> Refreshing...';
     try {
-      await Promise.allSettled([loadOverview(), loadLeads(), loadIntegrations()]);
+      await Promise.allSettled([loadOverview(), loadLeads(), loadMetaAttribution(), loadIntegrations()]);
     } finally {
       btn.classList.remove('btn-loading');
-      btn.innerHTML = origText;
+      btn.innerHTML = origHtml;
     }
   });
 
-  // Load Overview Data
+  // -------------------------------------------------------------
+  // TAB 1: OVERVIEW & ANALYTICS
+  // -------------------------------------------------------------
   async function loadOverview() {
     try {
-      const res = await fetch('/api/admin/analytics/summary');
-      if (res.status === 401) { window.location.href = '/admin/login'; return; }
-      if (!res.ok) {
-        console.warn('Analytics summary returned HTTP', res.status);
-        return;
+      let url = `/api/admin/analytics/summary?period=${encodeURIComponent(currentPeriod)}`;
+      if (currentPeriod === 'custom') {
+        if (customStartDate) url += `&startDate=${encodeURIComponent(customStartDate)}`;
+        if (customEndDate) url += `&endDate=${encodeURIComponent(customEndDate)}`;
       }
+
+      const res = await fetch(url);
+      if (res.status === 401) { window.location.href = '/admin/login'; return; }
+      if (!res.ok) return;
       const data = await res.json();
       if (!data) return;
 
-      const setVal = (id, val) => {
+      // Top Cards
+      const setEl = (id, val) => {
         const el = document.getElementById(id);
         if (el) el.textContent = typeof val === 'number' ? val.toLocaleString() : (val || 0);
       };
 
-      setVal('metricTotal', data.totalLeads);
-      setVal('metricToday', data.leadsToday);
-      setVal('metricRange', data.leadsInRange);
-      setVal('metricDuplicates', data.duplicateSuspects);
-
-      // Role Breakdown
-      const roleList = document.getElementById('roleBreakdownList');
-      if (roleList) {
-        roleList.innerHTML = (data.roleBreakdown || []).map(r => `
-          <div class="item-row">
-            <span class="name">${escapeHtml(r.school_role || 'Unspecified')}</span>
-            <span class="count-badge">${(r.count ?? 0).toLocaleString()}</span>
-          </div>
-        `).join('') || '<p class="desc">No leads recorded yet.</p>';
+      setEl('metricLeadsRange', data.leadsInRange);
+      const leadsSubtext = document.getElementById('metricLeadsSubtext');
+      if (leadsSubtext) {
+        leadsSubtext.textContent = `Today: ${(data.leadsToday || 0).toLocaleString()} | All-Time Total: ${(data.totalLeads || 0).toLocaleString()}`;
       }
 
-      // Source Breakdown
-      const sourceList = document.getElementById('sourceBreakdownList');
-      if (sourceList) {
-        sourceList.innerHTML = (data.sourceBreakdown || []).map(s => `
-          <div class="item-row">
-            <span class="name">${escapeHtml(s.source || 'Direct')}</span>
-            <span class="count-badge">${(s.count ?? 0).toLocaleString()}</span>
-          </div>
-        `).join('') || '<p class="desc">No leads recorded yet.</p>';
+      const v = data.visitors || {};
+      setEl('metricVisitorsRange', v.totalVisitors);
+      const vSubtext = document.getElementById('metricVisitorsSubtext');
+      if (vSubtext) {
+        vSubtext.textContent = `${(v.totalVisits || 0).toLocaleString()} total page sessions in period`;
       }
 
-      // Campaign Breakdown
-      const campList = document.getElementById('campaignBreakdownList');
-      if (campList) {
-        campList.innerHTML = (data.campaignBreakdown || []).map(c => `
-          <div class="item-row">
-            <span class="name">${escapeHtml(c.campaign || 'Direct')}</span>
-            <span class="count-badge">${(c.count ?? 0).toLocaleString()}</span>
-          </div>
-        `).join('') || '<p class="desc">No campaigns recorded yet.</p>';
+      setEl('metricConversionRate', `${v.conversionRate || 0}%`);
+      setEl('metricAvgDuration', formatDuration(v.avgDurationSec));
+      const scrollEl = document.getElementById('metricAvgScroll');
+      if (scrollEl) scrollEl.textContent = `Avg Scroll Depth: ${v.avgScrollPct || 0}%`;
+
+      setEl('metricDuplicates', data.duplicateSuspects);
+
+      // 1. Sources List
+      const sourcesList = document.getElementById('overviewSourcesList');
+      if (sourcesList) {
+        const sources = data.sourceBreakdown || [];
+        if (sources.length === 0) {
+          sourcesList.innerHTML = '<p class="desc" style="color:var(--muted);font-size:12.5px;padding:8px 0;">No traffic sources recorded yet.</p>';
+        } else {
+          sourcesList.innerHTML = sources.map(s => `
+            <div class="item-row">
+              <span class="name">${escapeHtml(s.source || 'Direct')}</span>
+              <span class="count-badge">${(s.count || 0).toLocaleString()}</span>
+            </div>
+          `).join('');
+        }
       }
 
-      // Status Breakdown
-      const statusList = document.getElementById('statusBreakdownList');
+      // 2. Roles List
+      const rolesList = document.getElementById('overviewRolesList');
+      if (rolesList) {
+        const roles = data.roleBreakdown || [];
+        if (roles.length === 0) {
+          rolesList.innerHTML = '<p class="desc" style="color:var(--muted);font-size:12.5px;padding:8px 0;">No applicant roles recorded in this period.</p>';
+        } else {
+          rolesList.innerHTML = roles.map(r => `
+            <div class="item-row">
+              <span class="name">${escapeHtml(r.school_role || 'Unspecified')}</span>
+              <span class="count-badge">${(r.count || 0).toLocaleString()}</span>
+            </div>
+          `).join('');
+        }
+      }
+
+      // 3. Status List
+      const statusList = document.getElementById('overviewStatusList');
       if (statusList) {
-        statusList.innerHTML = (data.statusBreakdown || []).map(s => `
-          <div class="item-row">
-            <span class="name">${escapeHtml(s.lead_status || 'NEW')}</span>
-            <span class="count-badge">${(s.count ?? 0).toLocaleString()}</span>
-          </div>
-        `).join('') || '<p class="desc">No statuses recorded yet.</p>';
+        const statuses = data.statusBreakdown || [];
+        if (statuses.length === 0) {
+          statusList.innerHTML = '<p class="desc" style="color:var(--muted);font-size:12.5px;padding:8px 0;">No status records yet.</p>';
+        } else {
+          statusList.innerHTML = statuses.map(s => `
+            <div class="item-row">
+              <span class="name">${escapeHtml(s.lead_status || 'NEW')}</span>
+              <span class="count-badge">${(s.count || 0).toLocaleString()}</span>
+            </div>
+          `).join('');
+        }
       }
 
-      // Traffic tab sync
-      const trafficChannels = document.getElementById('trafficChannelsList');
-      if (trafficChannels && sourceList) trafficChannels.innerHTML = sourceList.innerHTML;
-      const trafficCamps = document.getElementById('trafficCampaignsList');
-      if (trafficCamps && campList) trafficCamps.innerHTML = campList.innerHTML;
+      // 4. Campaigns List
+      const campList = document.getElementById('overviewCampaignsList');
+      if (campList) {
+        const camps = data.campaignBreakdown || [];
+        if (camps.length === 0) {
+          campList.innerHTML = '<p class="desc" style="color:var(--muted);font-size:12.5px;padding:8px 0;">No campaigns recorded yet.</p>';
+        } else {
+          campList.innerHTML = camps.map(c => `
+            <div class="item-row">
+              <span class="name" style="word-break:break-all;">${escapeHtml(c.campaign || 'Direct / None')}</span>
+              <span class="count-badge">${(c.count || 0).toLocaleString()}</span>
+            </div>
+          `).join('');
+        }
+      }
 
-      // Integration Badges
+      // 5. Heatmap Body
+      const heatmapBody = document.getElementById('overviewHeatmapBody');
+      if (heatmapBody) {
+        const sections = data.sectionsHeatmap || [];
+        if (sections.length === 0) {
+          heatmapBody.innerHTML = '<tr><td colspan="4" style="text-align:center;padding:20px;color:var(--muted);">No section dwell records in this period yet.</td></tr>';
+        } else {
+          const maxDwell = Math.max(...sections.map(s => s.total_dwell_sec), 1);
+          heatmapBody.innerHTML = sections.map(sec => {
+            const pct = Math.round((sec.total_dwell_sec / maxDwell) * 100);
+            return `
+              <tr>
+                <td><b>${escapeHtml(sec.name || sec.section_id)}</b></td>
+                <td><b>${formatDuration(sec.total_dwell_sec)}</b></td>
+                <td>${sec.views_count || 0}</td>
+                <td>
+                  <div style="font-size:11px;color:var(--muted);font-weight:700;">${pct}% attention</div>
+                  <div class="bar-track"><div class="bar-fill" style="width:${pct}%;"></div></div>
+                </td>
+              </tr>
+            `;
+          }).join('');
+        }
+      }
+
+      // 6. Top Cities List
+      const citiesList = document.getElementById('overviewCitiesList');
+      if (citiesList) {
+        const cities = data.topCities || [];
+        if (cities.length === 0) {
+          citiesList.innerHTML = '<p class="desc" style="color:var(--muted);font-size:12.5px;padding:8px 0;">No city records in this period yet.</p>';
+        } else {
+          citiesList.innerHTML = cities.map(c => `
+            <div class="item-row">
+              <span class="name">📍 <b>${escapeHtml(c.city)}</b>${c.region ? ', <small style="color:var(--muted);">' + escapeHtml(c.region) + '</small>' : ''}</span>
+              <span class="count-badge">${c.count}</span>
+            </div>
+          `).join('');
+        }
+      }
+
+      // Update Integration Badges in Tab 4
       if (data.integrations) {
         const gs = data.integrations.google_sheets;
         const gsConfigured = typeof gs === 'boolean' ? gs : (gs && gs.configured);
-        const gsMethod = (gs && gs.method) ? ` (${gs.method})` : '';
         const gsEl = document.getElementById('sheetsStatusVal');
         if (gsEl) {
-          gsEl.innerHTML = gsConfigured
-            ? `<span class="badge badge-synced">CONFIGURED${gsMethod}</span>`
-            : `<span class="badge badge-unconfigured">NOT CONFIGURED</span>`;
+          gsEl.innerHTML = gsConfigured ? '<span class="badge badge-synced">CONFIGURED</span>' : '<span class="badge badge-unconfigured">NOT CONFIGURED</span>';
         }
 
         const crm = data.integrations.crm;
         const crmConfigured = typeof crm === 'boolean' ? crm : (crm && crm.configured);
-        const crmProvider = (crm && crm.provider) ? ` (${crm.provider})` : '';
         const crmEl = document.getElementById('crmStatusVal');
         if (crmEl) {
-          crmEl.innerHTML = crmConfigured
-            ? `<span class="badge badge-synced">CONFIGURED${crmProvider}</span>`
-            : `<span class="badge badge-unconfigured">NOT CONFIGURED</span>`;
+          crmEl.innerHTML = crmConfigured ? '<span class="badge badge-synced">CONFIGURED</span>' : '<span class="badge badge-unconfigured">NOT CONFIGURED</span>';
         }
       }
 
-      if (data.totalLeads !== undefined && document.getElementById('dbRecordsVal')) {
-        document.getElementById('dbRecordsVal').textContent = (data.totalLeads ?? 0).toLocaleString();
-      }
     } catch (err) {
-      console.error('Failed to load overview:', err);
+      console.error('[loadOverview error]:', err);
     }
   }
 
-  // Load Leads Table
+  // Time Preset Buttons Handler
+  const timePresetBtns = document.querySelectorAll('.btn-time-preset');
+  const customBox = document.getElementById('overviewCustomRangeBox');
+  const activeRangeText = document.getElementById('overviewActiveRangeText');
+
+  timePresetBtns.forEach(btn => {
+    btn.addEventListener('click', function() {
+      timePresetBtns.forEach(b => b.classList.remove('is-active'));
+      this.classList.add('is-active');
+      const period = this.getAttribute('data-period');
+      currentPeriod = period;
+
+      if (period === 'custom') {
+        if (customBox) customBox.style.display = 'flex';
+        if (activeRangeText) activeRangeText.textContent = 'Select custom dates and click Apply';
+      } else {
+        if (customBox) customBox.style.display = 'none';
+        customStartDate = '';
+        customEndDate = '';
+        if (activeRangeText) {
+          if (period === 'today') activeRangeText.textContent = 'Showing: Today';
+          else if (period === '7d') activeRangeText.textContent = 'Showing: Last 7 Days';
+          else if (period === '30d') activeRangeText.textContent = 'Showing: Last 30 Days';
+          else if (period === '6m') activeRangeText.textContent = 'Showing: Last 6 Months';
+        }
+        loadOverview();
+      }
+    });
+  });
+
+  document.getElementById('btnApplyOverviewCustom')?.addEventListener('click', () => {
+    const s = document.getElementById('overviewCustomStart')?.value || '';
+    const e = document.getElementById('overviewCustomEnd')?.value || '';
+    if (!s && !e) {
+      alert('Please choose at least a start date or an end date.');
+      return;
+    }
+    customStartDate = s;
+    customEndDate = e;
+    if (activeRangeText) activeRangeText.textContent = `Showing: ${s || 'Beginning'} to ${e || 'Now'}`;
+    loadOverview();
+  });
+
+  // -------------------------------------------------------------
+  // TAB 2: LEADS MANAGEMENT
+  // -------------------------------------------------------------
+  let leadsOffset = 0;
+  const LEADS_LIMIT = 20;
+
   async function loadLeads() {
     const tbody = document.getElementById('leadsTableBody');
     if (tbody) {
       tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;padding:32px;color:var(--muted);"><span class="table-spinner"></span>Loading leads...</td></tr>';
     }
 
-    const search = document.getElementById('searchInput')?.value || '';
-    const role = document.getElementById('roleFilter')?.value || '';
-    const status = document.getElementById('statusFilter')?.value || '';
-    const gsheetStatus = document.getElementById('gsheetFilter')?.value || '';
-    const crmStatus = document.getElementById('crmFilter')?.value || '';
+    const search = document.getElementById('leadsSearchInput')?.value || '';
+    const role = document.getElementById('leadsRoleFilter')?.value || '';
+    const status = document.getElementById('leadsStatusFilter')?.value || '';
+    const gsheetStatus = document.getElementById('leadsSheetFilter')?.value || '';
+    const crmStatus = document.getElementById('leadsCrmFilter')?.value || '';
 
     const params = new URLSearchParams({
       search,
@@ -1030,16 +1485,14 @@ tr:hover td {
       status,
       gsheetStatus,
       crmStatus,
-      limit: PAGE_LIMIT,
-      offset: currentOffset
+      limit: LEADS_LIMIT,
+      offset: leadsOffset
     });
 
     try {
       const res = await fetch(`/api/admin/leads?${params}`);
       if (res.status === 401) { window.location.href = '/admin/login'; return; }
-      if (!res.ok) {
-        throw new Error(`HTTP ${res.status}`);
-      }
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const data = await res.json();
 
       if (!tbody) return;
@@ -1048,139 +1501,173 @@ tr:hover td {
 
       if (leads.length === 0) {
         tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;padding:32px;color:var(--muted);">No matching leads found in the database.</td></tr>';
-        const pageInfo = document.getElementById('pageInfo');
+        const pageInfo = document.getElementById('leadsPageInfo');
         if (pageInfo) pageInfo.textContent = 'Showing 0 of 0 leads';
-        const prevBtn = document.getElementById('prevPageBtn');
+        const prevBtn = document.getElementById('leadsPrevBtn');
         if (prevBtn) prevBtn.disabled = true;
-        const nextBtn = document.getElementById('nextPageBtn');
+        const nextBtn = document.getElementById('leadsNextBtn');
         if (nextBtn) nextBtn.disabled = true;
         return;
       }
 
-      tbody.innerHTML = leads.map(lead => {
-        const dateStr = lead.created_at ? new Date(lead.created_at).toLocaleString('en-IN', { dateStyle: 'short', timeStyle: 'short' }) : '-';
-        const gsheetBadge = getSyncBadge(lead.google_sheet_sync_status);
-        const crmBadge = getSyncBadge(lead.crm_sync_status);
+      tbody.innerHTML = leads.map(l => {
+        const dateStr = l.created_at ? new Date(l.created_at).toLocaleString('en-IN', { dateStyle: 'short', timeStyle: 'short' }) : '-';
+        const sheetBadge = l.google_sheet_sync_status === 'SYNCED' 
+          ? '<span class="badge badge-synced">SYNCED</span>' 
+          : (l.google_sheet_sync_status === 'FAILED' ? '<span class="badge badge-failed">FAILED</span>' : '<span class="badge badge-pending">PENDING</span>');
+        
+        const crmBadge = l.crm_sync_status === 'SYNCED' 
+          ? '<span class="badge badge-synced">SYNCED</span>' 
+          : (l.crm_sync_status === 'FAILED' ? '<span class="badge badge-failed">FAILED</span>' : '<span class="badge badge-pending">PENDING</span>');
 
         return `
           <tr>
             <td>
-              <button type="button" class="lead-link" onclick="window.showLeadDetails('${lead.lead_id}')">${escapeHtml(lead.lead_id)}</button><br>
+              <button type="button" style="background:none;border:none;color:var(--blue);font-weight:700;cursor:pointer;padding:0;" onclick="window.showLeadDetails('${l.lead_id}')">${escapeHtml(l.lead_id)}</button><br>
               <small style="color:var(--muted);">${dateStr}</small>
             </td>
             <td>
-              <b>${escapeHtml(lead.full_name || '')}</b><br>
-              <small style="color:var(--blue);">${escapeHtml(lead.school_role || '')}${lead.school_role_other ? ' (' + escapeHtml(lead.school_role_other) + ')' : ''}</small>
+              <b>${escapeHtml(l.full_name || '')}</b><br>
+              <small style="color:var(--blue);font-weight:600;">${escapeHtml(l.school_role || '')}</small>
             </td>
             <td>
-              <span>${escapeHtml(lead.phone || '')}</span><br>
-              <small style="color:var(--muted);">${lead.email ? escapeHtml(lead.email) : '<em>No email</em>'}</small>
+              <span>${escapeHtml(l.phone || '')}</span><br>
+              <small style="color:var(--muted);">${l.email ? escapeHtml(l.email) : '<em>No email</em>'}</small>
             </td>
             <td>
-              <b>${escapeHtml(lead.school_name || '')}</b><br>
-              <small style="color:var(--muted);">${escapeHtml(lead.school_city_district || '')}</small>
+              <b>${escapeHtml(l.school_name || '')}</b><br>
+              <small style="color:var(--muted);">${escapeHtml(l.school_city_district || '')}</small>
             </td>
             <td>
-              <span>${lead.utm_source ? escapeHtml(lead.utm_source) : 'Direct'}</span><br>
-              <small style="color:var(--muted);">${lead.utm_campaign ? escapeHtml(lead.utm_campaign) : ''}</small>
+              <span>${l.utm_source ? escapeHtml(l.utm_source) : 'Direct'}</span><br>
+              <small style="color:var(--muted);">${l.utm_campaign ? escapeHtml(l.utm_campaign) : ''}</small>
             </td>
             <td>
-              <select onchange="window.updateStatus('${lead.lead_id}', this.value)" style="padding:3px 6px;border-radius:6px;border:1px solid var(--line);font-size:11px;font-weight:700;">
-                <option value="NEW" ${lead.lead_status === 'NEW' ? 'selected' : ''}>NEW</option>
-                <option value="CONTACTED" ${lead.lead_status === 'CONTACTED' ? 'selected' : ''}>CONTACTED</option>
-                <option value="QUALIFIED" ${lead.lead_status === 'QUALIFIED' ? 'selected' : ''}>QUALIFIED</option>
-                <option value="INELIGIBLE" ${lead.lead_status === 'INELIGIBLE' ? 'selected' : ''}>INELIGIBLE</option>
-                <option value="ARCHIVED" ${lead.lead_status === 'ARCHIVED' ? 'selected' : ''}>ARCHIVED</option>
+              <select onchange="window.updateStatus('${l.lead_id}', this.value)" style="padding:3px 6px;border-radius:6px;border:1px solid var(--line);font-size:11px;font-weight:700;">
+                <option value="NEW" ${l.lead_status === 'NEW' ? 'selected' : ''}>NEW</option>
+                <option value="CONTACTED" ${l.lead_status === 'CONTACTED' ? 'selected' : ''}>CONTACTED</option>
+                <option value="QUALIFIED" ${l.lead_status === 'QUALIFIED' ? 'selected' : ''}>QUALIFIED</option>
+                <option value="INELIGIBLE" ${l.lead_status === 'INELIGIBLE' ? 'selected' : ''}>INELIGIBLE</option>
+                <option value="ARCHIVED" ${l.lead_status === 'ARCHIVED' ? 'selected' : ''}>ARCHIVED</option>
               </select>
             </td>
             <td>
-              ${gsheetBadge}
-              ${lead.google_sheet_sync_status === 'FAILED' ? `<button onclick="window.retryLeadSync('${lead.lead_id}')" style="margin-left:4px;padding:2px 6px;font-size:10px;cursor:pointer;">Retry</button>` : ''}
+              ${sheetBadge}
+              ${l.google_sheet_sync_status === 'FAILED' ? `<button onclick="window.retryLeadSync('${l.lead_id}')" style="margin-left:4px;padding:2px 6px;font-size:10px;cursor:pointer;">Retry</button>` : ''}
             </td>
             <td>
               ${crmBadge}
-              ${lead.crm_record_id ? `<br><small style="color:var(--muted);font-size:10px;">ID: ${escapeHtml(lead.crm_record_id)}</small>` : ''}
-              ${lead.crm_sync_status === 'FAILED' || lead.crm_sync_status === 'PENDING' ? `<button onclick="window.retryLeadSync('${lead.lead_id}')" style="margin-left:4px;padding:2px 6px;font-size:10px;cursor:pointer;">Retry</button>` : ''}
+              ${l.crm_sync_status === 'FAILED' ? `<button onclick="window.retryLeadSync('${l.lead_id}')" style="margin-left:4px;padding:2px 6px;font-size:10px;cursor:pointer;">Retry</button>` : ''}
             </td>
             <td>
-              <button type="button" class="btn-action btn-outline" style="padding:4px 8px;font-size:11px;" onclick="window.showLeadDetails('${lead.lead_id}')">View</button>
+              <button type="button" class="btn-action btn-outline" style="padding:3px 8px;font-size:11px;" onclick="window.showLeadDetails('${l.lead_id}')">View</button>
+              <button type="button" class="btn-action btn-outline" style="padding:3px 8px;font-size:11px;color:var(--danger);border-color:rgba(211,47,47,0.3);margin-left:4px;" onclick="window.deleteLeadRow('${l.lead_id}')">Delete</button>
             </td>
           </tr>
         `;
       }).join('');
 
-      const start = currentOffset + 1;
-      const end = Math.min(currentOffset + leads.length, total);
-      const pageInfo = document.getElementById('pageInfo');
+      const start = leadsOffset + 1;
+      const end = Math.min(leadsOffset + leads.length, total);
+      const pageInfo = document.getElementById('leadsPageInfo');
       if (pageInfo) pageInfo.textContent = `Showing ${start}–${end} of ${total} leads`;
-      const prevBtn = document.getElementById('prevPageBtn');
-      if (prevBtn) prevBtn.disabled = currentOffset === 0;
-      const nextBtn = document.getElementById('nextPageBtn');
+      const prevBtn = document.getElementById('leadsPrevBtn');
+      if (prevBtn) prevBtn.disabled = leadsOffset === 0;
+      const nextBtn = document.getElementById('leadsNextBtn');
       if (nextBtn) nextBtn.disabled = end >= total;
+
     } catch (err) {
-      console.error('Failed to load leads:', err);
+      console.error('[loadLeads error]:', err);
       if (tbody) {
-        tbody.innerHTML = `<tr><td colspan="9" style="text-align:center;padding:32px;color:var(--danger);">Failed to load leads data. <button onclick="window.loadLeads()" style="margin-left:8px;padding:3px 10px;font-size:11px;cursor:pointer;border-radius:4px;border:1px solid var(--line);background:#fff;">Retry</button></td></tr>`;
+        tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;padding:32px;color:var(--danger);">Failed to load leads data.</td></tr>';
       }
     }
   }
 
-  function getStatusBadge(st) {
-    if (st === 'NEW') return '<span class="badge badge-new">NEW</span>';
-    if (st === 'CONTACTED') return '<span class="badge badge-contacted">CONTACTED</span>';
-    if (st === 'QUALIFIED') return '<span class="badge badge-qualified">QUALIFIED</span>';
-    if (st === 'INELIGIBLE') return '<span class="badge badge-ineligible">INELIGIBLE</span>';
-    return `<span class="badge badge-unconfigured">${st}</span>`;
-  }
+  // Export CSV Handler
+  document.getElementById('exportLeadsCsvBtn')?.addEventListener('click', () => {
+    const search = document.getElementById('leadsSearchInput')?.value || '';
+    const role = document.getElementById('leadsRoleFilter')?.value || '';
+    const status = document.getElementById('leadsStatusFilter')?.value || '';
+    const gsheetStatus = document.getElementById('leadsSheetFilter')?.value || '';
+    const crmStatus = document.getElementById('leadsCrmFilter')?.value || '';
 
-  function getSyncBadge(st) {
-    if (st === 'SYNCED') return '<span class="badge badge-synced">SYNCED</span>';
-    if (st === 'PENDING') return '<span class="badge badge-pending">PENDING</span>';
-    if (st === 'FAILED') return '<span class="badge badge-failed">FAILED</span>';
-    return '<span class="badge badge-unconfigured">NOT CONFIGURED</span>';
-  }
+    const params = new URLSearchParams({ search, role, status, gsheetStatus, crmStatus });
+    window.location.href = `/api/admin/leads/export.csv?${params.toString()}`;
+  });
 
-  // Lead Details Modal Handler
+  // Batch Retry Syncs Handler
+  document.getElementById('retryAllSyncBtn')?.addEventListener('click', async () => {
+    try {
+      const res = await fetch('/api/admin/integrations/retry-all', { method: 'POST' });
+      const data = await res.json();
+      const sheetsSynced = data.sheets?.succeeded || 0;
+      const crmSynced = data.crm?.succeeded || 0;
+      alert(`Sync completed! Synced: ${sheetsSynced} to Sheets, ${crmSynced} to CRM.`);
+      loadLeads();
+      loadOverview();
+    } catch (err) {
+      alert('Batch sync retry failed.');
+    }
+  });
+
+  // Lead Details Drawer Modal
   window.showLeadDetails = async function(leadId) {
     try {
       const res = await fetch(`/api/admin/leads/${leadId}`);
       const data = await res.json();
       if (!data.lead) return;
-      const lead = data.lead;
+      const l = data.lead;
 
-      document.getElementById('detailModalTitle').textContent = `Lead: ${lead.lead_id}`;
+      document.getElementById('detailModalTitle').textContent = `Lead Inspection: ${l.lead_id}`;
       const body = document.getElementById('detailModalBody');
       body.innerHTML = `
-        <span class="detail-label">Full Name:</span><span class="detail-val"><b>${escapeHtml(lead.full_name)}</b></span>
-        <span class="detail-label">Phone:</span><span class="detail-val">${escapeHtml(lead.phone)} (Norm: ${escapeHtml(lead.phone_normalized)})</span>
-        <span class="detail-label">Email:</span><span class="detail-val">${lead.email ? escapeHtml(lead.email) : 'None'}</span>
-        <span class="detail-label">School Role:</span><span class="detail-val">${escapeHtml(lead.school_role)}${lead.school_role_other ? ' - ' + escapeHtml(lead.school_role_other) : ''}</span>
-        <span class="detail-label">School Name:</span><span class="detail-val"><b>${escapeHtml(lead.school_name)}</b></span>
-        <span class="detail-label">City/District:</span><span class="detail-val">${escapeHtml(lead.school_city_district)}</span>
-        <span class="detail-label">Consent Given:</span><span class="detail-val">${lead.consent ? 'YES' : 'NO'} (${escapeHtml(lead.consent_version)})</span>
-        <span class="detail-label">Submitted At:</span><span class="detail-val">${lead.created_at}</span>
-        <span class="detail-label">UTM Source:</span><span class="detail-val">${lead.utm_source || 'None'}</span>
-        <span class="detail-label">UTM Medium:</span><span class="detail-val">${lead.utm_medium || 'None'}</span>
-        <span class="detail-label">UTM Campaign:</span><span class="detail-val">${lead.utm_campaign || 'None'}</span>
-        <span class="detail-label">Meta fbclid:</span><span class="detail-val">${lead.fbclid || 'None'}</span>
-        <span class="detail-label">Landing URL:</span><span class="detail-val">${lead.landing_page_url || 'None'}</span>
-        <span class="detail-label">Referrer:</span><span class="detail-val">${lead.referrer_url || 'None'}</span>
-        <span class="detail-label">Sheets Sync:</span><span class="detail-val">${lead.google_sheet_sync_status} ${lead.google_sheet_error ? '<br><small style="color:red">' + escapeHtml(lead.google_sheet_error) + '</small>' : ''}</span>
-        <span class="detail-label">CRM Sync:</span><span class="detail-val">${lead.crm_sync_status} ${lead.crm_record_id ? ' (CRM ID: ' + escapeHtml(lead.crm_record_id) + ')' : ''} ${lead.crm_error ? '<br><small style="color:red">' + escapeHtml(lead.crm_error) + '</small>' : ''}</span>
-        <span class="detail-label">Duplicate Suspect:</span><span class="detail-val">${lead.is_duplicate_suspect ? '<span style="color:var(--warning);font-weight:700;">YES: ' + escapeHtml(lead.duplicate_reason) + '</span>' : 'No'}</span>
+        <span class="detail-label">Full Name:</span><span class="detail-val"><b>${escapeHtml(l.full_name)}</b></span>
+        <span class="detail-label">Phone:</span><span class="detail-val">${escapeHtml(l.phone)}</span>
+        <span class="detail-label">Email:</span><span class="detail-val">${l.email ? escapeHtml(l.email) : 'None'}</span>
+        <span class="detail-label">Role:</span><span class="detail-val">${escapeHtml(l.school_role)}</span>
+        <span class="detail-label">School:</span><span class="detail-val"><b>${escapeHtml(l.school_name)}</b></span>
+        <span class="detail-label">City/District:</span><span class="detail-val">${escapeHtml(l.school_city_district)}</span>
+        <span class="detail-label">Submitted At:</span><span class="detail-val">${new Date(l.created_at).toLocaleString('en-IN')}</span>
+        <span class="detail-label">UTM Source:</span><span class="detail-val">${l.utm_source || 'Direct'}</span>
+        <span class="detail-label">UTM Campaign:</span><span class="detail-val">${l.utm_campaign || 'None'}</span>
+        <span class="detail-label">Meta fbclid:</span><span class="detail-val">${l.fbclid || 'None'}</span>
+        <span class="detail-label">Sheets Sync:</span><span class="detail-val">${l.google_sheet_sync_status} ${l.google_sheet_error ? '<br><small style="color:red">' + escapeHtml(l.google_sheet_error) + '</small>' : ''}</span>
+        <span class="detail-label">CRM Sync:</span><span class="detail-val">${l.crm_sync_status} ${l.crm_record_id ? '(ID: ' + escapeHtml(l.crm_record_id) + ')' : ''}</span>
+        <div style="grid-column: span 2; margin-top: 16px; display: flex; justify-content: space-between; align-items: center; border-top: 1px solid var(--line); padding-top: 14px;">
+          <button type="button" class="btn-action btn-outline" style="color:var(--danger);border-color:var(--danger);" onclick="window.deleteLeadRow('${l.lead_id}')">🗑️ Delete This Lead</button>
+          <button type="button" class="btn-action btn-outline" onclick="document.getElementById('detailModal').classList.remove('is-active')">Close</button>
+        </div>
       `;
-
       document.getElementById('detailModal').classList.add('is-active');
     } catch (err) {
       console.error(err);
     }
   };
 
-  document.getElementById('closeDetailModal').addEventListener('click', () => {
+  window.deleteLeadRow = async function(leadId) {
+    const confirmed = confirm(`Are you sure you want to permanently delete lead ${leadId}? This action cannot be undone.`);
+    if (!confirmed) return;
+    try {
+      const res = await fetch(`/api/admin/leads/${leadId}`, { method: 'DELETE' });
+      const data = await res.json();
+      if (data.success) {
+        alert(data.message || 'Lead deleted successfully.');
+        document.getElementById('detailModal')?.classList.remove('is-active');
+        loadLeads();
+        loadOverview();
+      } else {
+        alert('Failed to delete lead: ' + (data.message || 'Unknown error'));
+      }
+    } catch (err) {
+      alert('Error deleting lead: ' + err.message);
+    }
+  };
+
+  document.getElementById('closeDetailModal')?.addEventListener('click', () => {
     document.getElementById('detailModal').classList.remove('is-active');
   });
 
-  // Update Status
   window.updateStatus = async function(leadId, newStatus) {
     try {
       await fetch(`/api/admin/leads/${leadId}/status`, {
@@ -1194,207 +1681,300 @@ tr:hover td {
     }
   };
 
-  // Retry Sync
   window.retryLeadSync = async function(leadId) {
     try {
       await fetch(`/api/admin/leads/${leadId}/retry-sync`, { method: 'POST' });
       loadLeads();
       loadOverview();
-      loadIntegrations();
     } catch (err) {
       alert('Retry sync request failed.');
     }
   };
 
-  // Retry All
-  document.getElementById('retryAllSyncBtn').addEventListener('click', async () => {
-    try {
-      const res = await fetch('/api/admin/integrations/retry-all', { method: 'POST' });
-      const data = await res.json();
-      const succeeded = data.succeeded !== undefined ? data.succeeded : (data.sheets?.succeeded || 0) + (data.crm?.succeeded || 0);
-      const failed = data.failed !== undefined ? data.failed : (data.sheets?.failed || 0) + (data.crm?.failed || 0);
-      const total = data.total !== undefined ? data.total : (data.sheets?.total || 0) + (data.crm?.total || 0);
-      alert(`Sync finished: ${succeeded} succeeded, ${failed} failed of ${total} total.`);
-      loadLeads();
-      loadOverview();
-      loadIntegrations();
-    } catch (err) {
-      alert('Batch sync failed');
-    }
+  // Leads Pagination & Filters Listeners
+  let searchTimer = null;
+  document.getElementById('leadsSearchInput')?.addEventListener('input', () => {
+    clearTimeout(searchTimer);
+    searchTimer = setTimeout(() => { leadsOffset = 0; loadLeads(); }, 300);
+  });
+  document.getElementById('leadsRoleFilter')?.addEventListener('change', () => { leadsOffset = 0; loadLeads(); });
+  document.getElementById('leadsStatusFilter')?.addEventListener('change', () => { leadsOffset = 0; loadLeads(); });
+  document.getElementById('leadsSheetFilter')?.addEventListener('change', () => { leadsOffset = 0; loadLeads(); });
+  document.getElementById('leadsCrmFilter')?.addEventListener('change', () => { leadsOffset = 0; loadLeads(); });
+  document.getElementById('leadsPrevBtn')?.addEventListener('click', () => {
+    if (leadsOffset >= LEADS_LIMIT) { leadsOffset -= LEADS_LIMIT; loadLeads(); }
+  });
+  document.getElementById('leadsNextBtn')?.addEventListener('click', () => {
+    leadsOffset += LEADS_LIMIT; loadLeads();
   });
 
-  // Export CSV
-  document.getElementById('exportCsvBtn').addEventListener('click', () => {
-    const search = document.getElementById('searchInput').value;
-    const role = document.getElementById('roleFilter').value;
-    const status = document.getElementById('statusFilter').value;
-    const params = new URLSearchParams({ search, role, status });
-    window.location.href = `/api/admin/leads/export.csv?${params}`;
-  });
+  // -------------------------------------------------------------
+  // TAB 3: META ADS INTELLIGENCE
+  // -------------------------------------------------------------
+  let metaListLoaded = false;
 
-  // Pagination Controls
-  document.getElementById('prevPageBtn').addEventListener('click', () => {
-    if (currentOffset >= PAGE_LIMIT) {
-      currentOffset -= PAGE_LIMIT;
-      loadLeads();
-    }
-  });
-  document.getElementById('nextPageBtn').addEventListener('click', () => {
-    currentOffset += PAGE_LIMIT;
-    loadLeads();
-  });
-
-  // Filter Listeners with 300ms Debounce
-  let searchDebounceTimer = null;
-  document.getElementById('searchInput')?.addEventListener('input', () => {
-    clearTimeout(searchDebounceTimer);
-    searchDebounceTimer = setTimeout(() => {
-      currentOffset = 0;
-      loadLeads();
-    }, 300);
-  });
-  document.getElementById('roleFilter')?.addEventListener('change', () => { currentOffset = 0; loadLeads(); });
-  document.getElementById('statusFilter')?.addEventListener('change', () => { currentOffset = 0; loadLeads(); });
-  document.getElementById('gsheetFilter')?.addEventListener('change', () => { currentOffset = 0; loadLeads(); });
-  document.getElementById('crmFilter')?.addEventListener('change', () => { currentOffset = 0; loadLeads(); });
-
-  window.loadLeads = loadLeads;
-  window.loadOverview = loadOverview;
-  window.loadIntegrations = loadIntegrations;
-
-  // Load Geography
-  async function loadGeography() {
-    try {
-      const [cRes, sRes] = await Promise.all([
-        fetch('/api/admin/reports/geography'),
-        fetch('/api/admin/reports/schools')
-      ]);
-      const cities = await cRes.json();
-      const schools = await sRes.json();
-
-      document.getElementById('cityList').innerHTML = (cities.records || []).map(c => `
-        <div class="item-row">
-          <span class="name">${escapeHtml(c.school_city_district)}</span>
-          <span class="count-badge">${c.lead_count} enquiries</span>
-        </div>
-      `).join('') || '<p class="desc">No geography data yet.</p>';
-
-      document.getElementById('schoolList').innerHTML = (schools.records || []).map(s => `
-        <div class="item-row">
-          <div>
-            <span class="name">${escapeHtml(s.school_name)}</span><br>
-            <small style="color:var(--muted);">${escapeHtml(s.school_city_district || '')}</small>
-          </div>
-          <span class="count-badge">${s.applicant_count}</span>
-        </div>
-      `).join('') || '<p class="desc">No school data yet.</p>';
-    } catch (err) {
-      console.error(err);
-    }
-  }
-
-  // Load Meta Attribution Details
   async function loadMetaAttribution() {
     try {
-      const res = await fetch('/api/admin/reports/meta');
-      const data = await res.json();
-      document.getElementById('metaTotalLeads').textContent = data.totalMetaAttributedLeads;
-      document.getElementById('metaClickIdLeads').textContent = data.leadsWithClickId;
-      document.getElementById('metaApiStatusBadge').textContent = data.isMetaApiConnected ? 'Connected' : 'Awaiting Config';
-
-      const campList = document.getElementById('metaCampaignList');
-      campList.innerHTML = (data.campaignBreakdown || []).map(c => `
-        <div class="item-row">
-          <span class="name">${escapeHtml(c.campaign)}</span>
-          <span class="count-badge">${c.leads} leads (${c.withFbclid} with click ID)</span>
-        </div>
-      `).join('') || '<p class="desc">No Meta-attributed leads recorded yet.</p>';
-    } catch (err) {
-      console.error(err);
-    }
-  }
-
-  // Load Integrations & Health Data
-  async function loadIntegrations() {
-    try {
-      const res = await fetch('/api/admin/integrations/logs');
+      const res = await fetch('/api/admin/reports/meta?period=30d');
       if (res.status === 401) { window.location.href = '/admin/login'; return; }
       const data = await res.json();
 
-      if (data.database) {
-        const db = data.database;
-        if (document.getElementById('dbTypeVal')) document.getElementById('dbTypeVal').textContent = db.type || 'Cloudflare D1 SQL Database';
-        if (document.getElementById('dbPathVal')) document.getElementById('dbPathVal').textContent = db.id || 'a63cfb65-eb51-4ade-86f7-0154c874fb17';
-        if (document.getElementById('dbRecordsVal')) document.getElementById('dbRecordsVal').textContent = (db.total_leads ?? 0).toLocaleString();
-        if (document.getElementById('dbConcurrencyVal')) document.getElementById('dbConcurrencyVal').textContent = db.concurrency || 'Edge Distributed WAL';
-        if (document.getElementById('dbStatusVal')) {
-          document.getElementById('dbStatusVal').innerHTML = `<span class="badge badge-synced">${db.status || 'CONNECTED'}</span>`;
+      const instant = data.instantFormsCampaign || {};
+      const web = data.websiteTrafficCampaign || {};
+
+      // Campaign 1: Instant Forms
+      const instTotalEl = document.getElementById('metaInstantTotal');
+      if (instTotalEl) instTotalEl.textContent = (instant.totalLeads || 0).toLocaleString();
+      const instTodayEl = document.getElementById('metaInstantToday');
+      if (instTodayEl) instTodayEl.textContent = (instant.todayLeads || 0).toLocaleString();
+      const instSyncEl = document.getElementById('metaInstantSyncRate');
+      if (instSyncEl) {
+        const rate = instant.totalLeads > 0 
+          ? Math.round(((instant.sheetsSynced + instant.crmSynced) / (instant.totalLeads * 2)) * 100) 
+          : 100;
+        instSyncEl.textContent = `${rate}% Synced`;
+      }
+
+      const instBody = document.getElementById('metaInstantLeadsBody');
+      if (instBody) {
+        if (instant.leads && instant.leads.length > 0) {
+          instBody.innerHTML = instant.leads.map(l => `
+            <tr>
+              <td><b>${escapeHtml(l.full_name)}</b><br><small style="color:var(--muted);">${escapeHtml(l.school_role)}</small></td>
+              <td><b>${escapeHtml(l.phone)}</b><br><small style="color:var(--muted);">${escapeHtml(l.email || 'None')}</small></td>
+              <td><b>${escapeHtml(l.school_name)}</b><br><small style="color:var(--muted);">${escapeHtml(l.school_city_district)}</small></td>
+              <td><span class="badge badge-synced">SYNCED</span></td>
+            </tr>
+          `).join('');
+        } else {
+          instBody.innerHTML = '<tr><td colspan="4" style="text-align:center;padding:16px;color:var(--muted);">No Instant Form leads received yet.</td></tr>';
         }
       }
 
-      const tbody = document.getElementById('syncLogsBody');
-      if (!tbody) return;
+      // Campaign 2: Website Traffic
+      const webClicksEl = document.getElementById('metaWebClicks');
+      if (webClicksEl) webClicksEl.textContent = (web.totalClicks || 0).toLocaleString();
+      const webUniqueEl = document.getElementById('metaWebUnique');
+      if (webUniqueEl) webUniqueEl.textContent = (web.uniqueVisitors || 0).toLocaleString();
+      const webConvEl = document.getElementById('metaWebConversions');
+      if (webConvEl) webConvEl.textContent = (web.onSiteConversions || 0).toLocaleString();
 
-      if (!data.logs || data.logs.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:16px;color:var(--muted);">No synchronization attempts logged yet.</td></tr>';
-        return;
+      const webBody = document.getElementById('metaWebSessionsBody');
+      if (webBody) {
+        if (web.recentSessions && web.recentSessions.length > 0) {
+          webBody.innerHTML = web.recentSessions.map(s => {
+            const dateStr = new Date(s.created_at).toLocaleString('en-IN', { dateStyle: 'short', timeStyle: 'short' });
+            return `
+              <tr>
+                <td><small style="color:var(--muted);">${dateStr}</small></td>
+                <td><b>${escapeHtml(s.city || 'Unknown')}</b></td>
+                <td>${escapeHtml(s.source_app || 'Meta Ad')} • ${escapeHtml(s.device_type || 'Mobile')}</td>
+                <td><b>${formatDuration(s.total_duration_sec)}</b></td>
+                <td>${s.is_converted ? '<span class="badge badge-synced">CONVERTED</span>' : '<span class="badge" style="background:#f1f3f5;color:var(--muted);">BROWSING</span>'}</td>
+              </tr>
+            `;
+          }).join('');
+        } else {
+          webBody.innerHTML = '<tr><td colspan="5" style="text-align:center;padding:16px;color:var(--muted);">No Meta website visitors recorded yet.</td></tr>';
+        }
       }
 
-      tbody.innerHTML = data.logs.map(log => {
-        const dateStr = new Date(log.attempted_at).toLocaleString('en-IN', { dateStyle: 'short', timeStyle: 'medium' });
-        const statusBadge = log.status === 'SUCCESS' || log.status === 'SYNCED'
-          ? '<span class="badge badge-synced">SUCCESS</span>'
-          : (log.status === 'PENDING' ? '<span class="badge badge-pending">PENDING</span>' : '<span class="badge badge-failed">FAILED</span>');
+      if (!metaListLoaded) {
+        loadMetaCampaignsDropdown();
+      }
 
-        return `
-          <tr>
-            <td><b>${escapeHtml(log.lead_id)}</b></td>
-            <td><span class="badge ${log.target === 'CRM' ? 'badge-qualified' : 'badge-new'}">${escapeHtml(log.target)}</span></td>
-            <td>${statusBadge}</td>
-            <td>${log.duration_ms ? log.duration_ms + 'ms' : '-'}</td>
-            <td><small style="color:var(--muted);">${dateStr}</small></td>
-            <td><small style="color:${log.status === 'FAILED' ? 'var(--danger)' : 'var(--muted)'};">${escapeHtml(log.error_message || 'OK')}</small></td>
-          </tr>
-        `;
-      }).join('');
     } catch (err) {
-      console.error('Failed to load integrations:', err);
+      console.error('[loadMetaAttribution error]:', err);
     }
   }
 
+  async function loadMetaCampaignsDropdown() {
+    const select = document.getElementById('metaCampaignSelect');
+    if (!select) return;
+    try {
+      const res = await fetch('/api/admin/meta/campaigns');
+      if (res.status === 401) return;
+      const data = await res.json();
+      if (data.success && data.campaigns && data.campaigns.length > 0) {
+        select.innerHTML = '<option value="">-- Choose an Active Meta Campaign --</option>' + 
+          data.campaigns.map(c => `
+            <option value="${escapeHtml(c.id)}">
+              ${escapeHtml(c.name)} (${c.status}) [${c.id}]
+            </option>
+          `).join('');
+        metaListLoaded = true;
+
+        const defaultCamp = data.campaigns.find(c => c.id === '120248039512450384' || c.name.toLowerCase().includes('grant'));
+        if (defaultCamp && !document.getElementById('metaCampaignIdInput').value) {
+          select.value = defaultCamp.id;
+          document.getElementById('metaCampaignIdInput').value = defaultCamp.id;
+          trackSingleCampaign(defaultCamp.id, 'maximum');
+        }
+      }
+    } catch (err) {
+      console.error('[loadMetaCampaignsDropdown error]:', err);
+    }
+  }
+
+  async function trackSingleCampaign(campaignId, datePreset = 'maximum') {
+    const cid = (campaignId || document.getElementById('metaCampaignIdInput')?.value || document.getElementById('metaCampaignSelect')?.value || '').trim();
+    if (!cid) {
+      alert('Please enter or select a Campaign ID to track.');
+      return;
+    }
+
+    const preset = datePreset || document.getElementById('metaDatePresetSelect')?.value || 'maximum';
+    const btn = document.getElementById('btnTrackCampaign');
+    if (btn) { btn.disabled = true; btn.textContent = 'Tracking...'; }
+
+    try {
+      const res = await fetch(`/api/admin/meta/campaign/${encodeURIComponent(cid)}?datePreset=${encodeURIComponent(preset)}`);
+      const data = await res.json();
+
+      if (!data.success) {
+        alert('Meta API Notice: ' + (data.error || 'Failed to fetch campaign'));
+        return;
+      }
+
+      const box = document.getElementById('campaignAnalyticsResultBox');
+      if (box) box.style.display = 'block';
+
+      if (document.getElementById('campResultName')) document.getElementById('campResultName').textContent = data.campaignName || cid;
+      if (document.getElementById('campResultId')) document.getElementById('campResultId').textContent = data.campaignId;
+      if (document.getElementById('campResultBadge')) document.getElementById('campResultBadge').textContent = data.status || 'ACTIVE';
+      if (document.getElementById('campResultObjective')) document.getElementById('campResultObjective').textContent = data.objective || 'OUTCOME_LEADS';
+
+      const m = data.metaMetrics || {};
+      if (document.getElementById('campMetricSpend')) document.getElementById('campMetricSpend').textContent = `₹${parseFloat(m.spend || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}`;
+      if (document.getElementById('campMetricImpressions')) document.getElementById('campMetricImpressions').textContent = (m.impressions || 0).toLocaleString();
+      if (document.getElementById('campMetricReach')) document.getElementById('campMetricReach').textContent = (m.reach || 0).toLocaleString();
+      if (document.getElementById('campMetricClicks')) document.getElementById('campMetricClicks').textContent = (m.clicks || 0).toLocaleString();
+      if (document.getElementById('campMetricCpc')) document.getElementById('campMetricCpc').textContent = `₹${parseFloat(m.cpc || 0).toFixed(2)}`;
+      if (document.getElementById('campMetricCtr')) document.getElementById('campMetricCtr').textContent = `${parseFloat(m.ctr || 0).toFixed(2)}%`;
+
+      const adsBody = document.getElementById('campAdsTableBody');
+      const ads = data.ads || [];
+      if (document.getElementById('campAdsCountBadge')) document.getElementById('campAdsCountBadge').textContent = `${ads.length} Ads`;
+      if (adsBody) {
+        if (ads.length > 0) {
+          adsBody.innerHTML = ads.map(ad => `
+            <tr>
+              <td><b>${escapeHtml(ad.ad_name)}</b><br><small style="color:var(--muted);">${ad.ad_id}</small></td>
+              <td>${escapeHtml(ad.adset_name || 'Broad Target')}</td>
+              <td><b>₹${ad.spend}</b></td>
+              <td>${ad.impressions.toLocaleString()}</td>
+              <td><b style="color:var(--blue);">${ad.clicks.toLocaleString()}</b></td>
+              <td>₹${ad.cpc}</td>
+              <td><span class="badge badge-synced">${ad.ctr}%</span></td>
+            </tr>
+          `).join('');
+        } else {
+          adsBody.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:16px;color:var(--muted);">No individual ad impressions in this range.</td></tr>';
+        }
+      }
+
+    } catch (err) {
+      console.error(err);
+      alert('Error querying Meta API: ' + err.message);
+    } finally {
+      if (btn) { btn.disabled = false; btn.textContent = 'Track Campaign'; }
+    }
+  }
+
+  document.getElementById('metaCampaignSelect')?.addEventListener('change', function() {
+    if (this.value) {
+      document.getElementById('metaCampaignIdInput').value = this.value;
+      trackSingleCampaign(this.value);
+    }
+  });
+
+  document.getElementById('btnTrackCampaign')?.addEventListener('click', () => trackSingleCampaign());
+
+  // -------------------------------------------------------------
+  // TAB 4: INTEGRATIONS & HEALTH
+  // -------------------------------------------------------------
+  async function loadIntegrations() {
+    // Tests connection statuses
+    try {
+      const res = await fetch('/api/admin/integrations/logs');
+      if (res.status === 401) return;
+    } catch {}
+  }
+
   // Test Sheets Ping
-  document.getElementById('testSheetsBtn').addEventListener('click', async () => {
+  document.getElementById('testSheetsBtn')?.addEventListener('click', async () => {
     const btn = document.getElementById('testSheetsBtn');
     btn.disabled = true;
-    btn.textContent = 'Testing Sheets...';
+    btn.textContent = 'Testing...';
     try {
       const res = await fetch('/api/admin/integrations/test-sheets', { method: 'POST' });
       const data = await res.json();
-      alert(data.message || (data.success ? 'Sheets ping succeeded!' : 'Sheets ping failed.'));
-      loadIntegrations();
-    } catch (err) {
-      alert('Error testing Google Sheets connection');
+      alert(data.message || (data.success ? 'Google Sheets ping succeeded!' : 'Google Sheets test ping failed.'));
+    } catch {
+      alert('Error testing Google Sheets');
     } finally {
       btn.disabled = false;
       btn.textContent = 'Test Sheets Ping';
     }
   });
 
-  // Test LeadsZone CRM Ping
-  document.getElementById('testCrmBtn').addEventListener('click', async () => {
+  // Test CRM Ping
+  document.getElementById('testCrmBtn')?.addEventListener('click', async () => {
     const btn = document.getElementById('testCrmBtn');
     btn.disabled = true;
-    btn.textContent = 'Testing CRM...';
+    btn.textContent = 'Testing...';
     try {
       const res = await fetch('/api/admin/integrations/test-crm', { method: 'POST' });
       const data = await res.json();
-      alert(data.message || (data.success ? 'CRM ping succeeded!' : 'CRM ping failed.'));
-      loadIntegrations();
-    } catch (err) {
-      alert('Error testing LeadsZone CRM connection');
+      alert(data.message || (data.success ? 'CRM ping succeeded!' : 'LeadsZone CRM test ping failed.'));
+    } catch {
+      alert('Error testing LeadsZone CRM');
     } finally {
       btn.disabled = false;
-      btn.textContent = 'Test LeadsZone CRM Ping';
+      btn.textContent = 'Test CRM Ping';
+    }
+  });
+
+  // Send Test Verification Lead
+  document.getElementById('btnSendTestLead')?.addEventListener('click', async () => {
+    const btn = document.getElementById('btnSendTestLead');
+    btn.disabled = true;
+    btn.textContent = 'Sending...';
+    try {
+      const res = await fetch('/api/admin/system/create-sample-lead', { method: 'POST' });
+      const data = await res.json();
+      if (data.success) {
+        alert('Verification lead created successfully! Check your Overview and Leads tabs to see real data update in real time.');
+        await Promise.allSettled([loadOverview(), loadLeads()]);
+      } else {
+        alert('Failed to generate test lead.');
+      }
+    } catch (err) {
+      alert('Error: ' + err.message);
+    } finally {
+      btn.disabled = false;
+      btn.textContent = '⚡ Send Test Lead';
+    }
+  });
+
+  // Purge Test Dummy Data Handler
+  document.getElementById('purgeDummyDataBtn')?.addEventListener('click', async () => {
+    const confirmed = confirm("Are you sure you want to purge all test dummy leads and logs?\\n\\nThis will reset the database for live production launch so real Meta Ads leads start from a clean slate. This action cannot be undone.");
+    if (!confirmed) return;
+
+    const btn = document.getElementById('purgeDummyDataBtn');
+    btn.disabled = true;
+    btn.textContent = 'Purging...';
+    try {
+      const res = await fetch('/api/admin/system/purge-dummy', { method: 'POST' });
+      const data = await res.json();
+      alert(data.message || 'All test data purged! Ready for production.');
+      await Promise.allSettled([loadOverview(), loadLeads()]);
+    } catch (err) {
+      alert('Error purging data: ' + err.message);
+    } finally {
+      btn.disabled = false;
+      btn.textContent = '🗑️ Purge Test Data';
     }
   });
 

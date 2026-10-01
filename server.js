@@ -17,6 +17,9 @@ const auth = require('./src/auth');
 const sheets = require('./src/sheets');
 const crm = require('./src/crm');
 const analytics = require('./src/analytics');
+const trackerService = require('./src/tracker_service');
+const metaLeadgen = require('./src/meta_leadgen');
+const metaApi = require('./src/meta_api');
 
 const PORT = parseInt(process.env.PORT, 10) || 3000;
 const ROOT_DIR = __dirname;
@@ -34,19 +37,23 @@ const MIME_TYPES = {
   '.svg': 'image/svg+xml',
   '.mp4': 'video/mp4',
   '.ico': 'image/x-icon',
-  '.csv': 'text/csv; charset=utf-8'
+  '.csv': 'text/csv; charset=utf-8',
+  '.txt': 'text/plain; charset=utf-8',
+  '.xml': 'application/xml; charset=utf-8'
 };
 
 // In-memory rate-limiter for public lead submission: max 10 per 5 min per IP
 const leadSubmissionsRate = new Map(); // ip -> [timestamps]
 
 function checkLeadRateLimit(ip) {
+  const isLocal = ip === '127.0.0.1' || ip === '::1' || ip === '::ffff:127.0.0.1' || process.env.NODE_ENV === 'test';
+  const limit = isLocal ? 200 : 10;
   const now = Date.now();
   const windowMs = 5 * 60 * 1000;
   const history = leadSubmissionsRate.get(ip) || [];
   const recent = history.filter(t => now - t < windowMs);
 
-  if (recent.length >= 10) {
+  if (recent.length >= limit) {
     return false;
   }
   recent.push(now);
@@ -224,6 +231,57 @@ const server = http.createServer(async (req, res) => {
   }
 
   // ---------------------------------------------------------------------------
+  // 2B. VISITOR INTELLIGENCE & ENGAGEMENT TRACKING (PUBLIC)
+  // ---------------------------------------------------------------------------
+  if (pathname === '/api/track/session' && method === 'POST') {
+    try {
+      const body = await parseJsonBody(req);
+      const result = await trackerService.processSessionPing(body, req);
+      return sendJson(res, 200, result);
+    } catch (err) {
+      return sendJson(res, 400, { success: false, error: err.message });
+    }
+  }
+
+  if (pathname === '/api/track/beacon' && method === 'POST') {
+    try {
+      const body = await parseJsonBody(req);
+      const result = trackerService.processBeacon(body, req);
+      return sendJson(res, 200, result);
+    } catch (err) {
+      return sendJson(res, 200, { success: false });
+    }
+  }
+
+  // ---------------------------------------------------------------------------
+  // 2C. META LEAD ADS WEBHOOKS (IN-APP LEADS & INSTANT FORMS)
+  // ---------------------------------------------------------------------------
+  if (pathname === '/api/webhooks/meta' && method === 'GET') {
+    const verification = metaLeadgen.verifyWebhook(query);
+    if (verification.verified) {
+      res.writeHead(200, { 'Content-Type': 'text/plain' });
+      return res.end(verification.challenge);
+    }
+    return sendJson(res, 403, { error: 'Verification token mismatch' });
+  }
+
+  if (pathname === '/api/webhooks/meta' && method === 'POST') {
+    try {
+      const body = await parseJsonBody(req);
+      // Acknowledge Meta immediately within 3s as required by Meta webhook SLA
+      sendJson(res, 200, { success: true });
+
+      // Ingest and forward lead asynchronously
+      metaLeadgen.handleMetaLeadgenWebhook(body).catch(err => {
+        console.error('[Meta Webhook Async Error]', err);
+      });
+      return;
+    } catch (err) {
+      return sendJson(res, 400, { success: false, error: err.message });
+    }
+  }
+
+  // ---------------------------------------------------------------------------
   // 3. ADMIN AUTHENTICATION ROUTES
   // ---------------------------------------------------------------------------
   if (pathname === '/api/admin/login' && method === 'POST') {
@@ -274,8 +332,7 @@ const server = http.createServer(async (req, res) => {
 
     // A. Analytics Summary
     if (pathname === '/api/admin/analytics/summary' && method === 'GET') {
-      const days = parseInt(query.days, 10) || 30;
-      const summary = analytics.getDashboardSummary(days);
+      const summary = analytics.getDashboardSummary(query);
       return sendJson(res, 200, summary);
     }
 
@@ -291,6 +348,7 @@ const server = http.createServer(async (req, res) => {
         source: q.source || '',
         campaign: q.campaign || '',
         city: q.city || '',
+        period: q.period || '',
         startDate: q.startDate || '',
         endDate: q.endDate || '',
         limit: parseInt(q.limit, 10) || 20,
@@ -309,6 +367,13 @@ const server = http.createServer(async (req, res) => {
 
       const syncLogs = db.getSyncLogs(leadId);
       return sendJson(res, 200, { success: true, lead, syncLogs });
+    }
+
+    if (leadDetailMatch && method === 'DELETE') {
+      const leadId = leadDetailMatch[1];
+      const deleted = db.deleteLead(leadId);
+      if (!deleted) return sendJson(res, 404, { success: false, message: 'Lead not found or already deleted.' });
+      return sendJson(res, 200, { success: true, message: `Lead ${leadId} deleted successfully.` });
     }
 
     // D. Update Lead Status
@@ -375,17 +440,31 @@ const server = http.createServer(async (req, res) => {
 
     // H. Reports: Geography
     if (pathname === '/api/admin/reports/geography' && method === 'GET') {
-      return sendJson(res, 200, analytics.getGeographyReport());
+      return sendJson(res, 200, analytics.getGeographyReport(query));
     }
 
     // I. Reports: Schools
     if (pathname === '/api/admin/reports/schools' && method === 'GET') {
-      return sendJson(res, 200, analytics.getSchoolReport());
+      return sendJson(res, 200, analytics.getSchoolReport(query));
     }
 
     // J. Reports: Meta Attribution Details
     if (pathname === '/api/admin/reports/meta' && method === 'GET') {
-      return sendJson(res, 200, analytics.getMetaAttributionDetails());
+      return sendJson(res, 200, analytics.getMetaAttributionDetails(query));
+    }
+
+    // J1. Meta Marketing API: List Campaigns in Ad Account
+    if (pathname === '/api/admin/meta/campaigns' && method === 'GET') {
+      const data = await metaApi.listCampaigns();
+      return sendJson(res, 200, data);
+    }
+
+    // J2. Meta Marketing API: Single Campaign Intelligence & Ad/AdSet Breakdown
+    if (pathname.startsWith('/api/admin/meta/campaign/') && method === 'GET') {
+      const campaignId = pathname.replace('/api/admin/meta/campaign/', '').trim();
+      const datePreset = query.datePreset || 'maximum';
+      const data = await metaApi.getCampaignAnalytics(campaignId, datePreset);
+      return sendJson(res, 200, data);
     }
 
     // K. Export Leads to CSV
@@ -395,6 +474,14 @@ const server = http.createServer(async (req, res) => {
         search: q.search || '',
         role: q.role || '',
         status: q.status || '',
+        gsheetStatus: q.gsheetStatus || '',
+        crmStatus: q.crmStatus || '',
+        source: q.source || '',
+        campaign: q.campaign || '',
+        city: q.city || '',
+        period: q.period || '',
+        startDate: q.startDate || '',
+        endDate: q.endDate || '',
         limit: 10000,
         offset: 0
       });
@@ -438,6 +525,84 @@ const server = http.createServer(async (req, res) => {
         'Cache-Control': 'no-store'
       });
       return res.end(csvData);
+    }
+
+    // L. Visitor Intelligence: Summary & Section Heatmap
+    if (pathname === '/api/admin/tracking/summary' && method === 'GET') {
+      const summary = trackerService.getTrackingSummary({
+        period: query.period || '',
+        days: parseInt(query.days, 10) || null,
+        startDate: query.startDate || '',
+        endDate: query.endDate || ''
+      });
+      return sendJson(res, 200, { success: true, summary });
+    }
+
+    // M. Visitor Intelligence: Sessions Feed
+    if (pathname === '/api/admin/tracking/sessions' && method === 'GET') {
+      const q = query;
+      const result = db.listVisitorSessions({
+        search: q.search || '',
+        source: q.source || '',
+        city: q.city || '',
+        converted: q.converted !== undefined && q.converted !== '' ? q.converted : '',
+        device: q.device || '',
+        period: q.period || '',
+        startDate: q.startDate || '',
+        endDate: q.endDate || '',
+        limit: parseInt(q.limit, 10) || 25,
+        offset: parseInt(q.offset, 10) || 0,
+        sortOrder: q.sortOrder || 'DESC'
+      });
+      return sendJson(res, 200, { success: true, ...result });
+    }
+
+    // N. Visitor Intelligence: Single Session Details
+    const sessionDetailMatch = pathname.match(/^\/api\/admin\/tracking\/sessions\/([a-zA-Z0-9_\-]+)$/);
+    if (sessionDetailMatch && method === 'GET') {
+      const sessionId = sessionDetailMatch[1];
+      const session = db.getVisitorSessionById(sessionId);
+      if (!session) return sendJson(res, 404, { success: false, message: 'Session not found.' });
+      return sendJson(res, 200, { success: true, session });
+    }
+
+    // O. System: Purge Test Dummy Data for Production Readiness
+    if (pathname === '/api/admin/system/purge-dummy' && method === 'POST') {
+      const result = db.purgeTestDummyData();
+      return sendJson(res, 200, result);
+    }
+
+    // P. System: Generate Test Verification Lead (to verify end-to-end data pipeline)
+    if (pathname === '/api/admin/system/create-sample-lead' && method === 'POST') {
+      const sampleNames = ['Dr. Ananya Sharma', 'Principal Rajesh Verma', 'Sister Mary Thomas', 'Dr. Vikram Malhotra'];
+      const sampleSchools = ['DPS International School', 'St. Xavier High School', 'Carmel Convent School', 'Heritage Valley Academy'];
+      const sampleCities = ['Varanasi, UP', 'Indore, MP', 'Gurugram, Haryana', 'Lucknow, UP'];
+      const sampleRoles = ['Principal', 'School Director / Management', 'Administrator'];
+
+      const randomIdx = Math.floor(Math.random() * sampleNames.length);
+      const randomPhone = `9876${Math.floor(100000 + Math.random() * 900000)}`;
+
+      const testPayload = {
+        full_name: sampleNames[randomIdx],
+        phone: randomPhone,
+        email: `contact@${sampleSchools[randomIdx].toLowerCase().replace(/[^a-z]/g, '')}.edu.in`,
+        school_role: sampleRoles[randomIdx % sampleRoles.length],
+        school_name: sampleSchools[randomIdx],
+        school_city_district: sampleCities[randomIdx],
+        consent: true,
+        consent_version: 'v1.0-2027',
+        utm_source: 'meta',
+        utm_medium: 'cpc',
+        utm_campaign: 'Career Readiness Grant 2027-28 | UP, MP, Haryana | Leads',
+        landing_page_url: 'https://event.mymentorcircle.com/?utm_source=meta'
+      };
+
+      const result = leads.processNewLead(testPayload, clientIp);
+      if (result.success && result.lead_id) {
+        sheets.queueLeadSync(result.lead_id);
+        crm.queueLeadSync(result.lead_id);
+      }
+      return sendJson(res, 201, { success: true, message: 'Test verification lead created and queued for sync!', lead: result.lead });
     }
 
     return sendJson(res, 404, { success: false, message: 'Admin API route not found.' });

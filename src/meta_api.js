@@ -1,0 +1,231 @@
+/**
+ * MMC Career Readiness Grant™ 2027–28 — Meta Marketing API Integration Module
+ * Queries Meta Graph API to fetch live campaign lists, campaign insights,
+ * adset-level breakdowns, and ad-level performance metrics.
+ */
+
+const https = require('node:https');
+require('./env');
+const db = require('./db');
+
+const getAccessToken = () => process.env.META_PAGE_ACCESS_TOKEN || '';
+const getAdAccountId = () => (process.env.META_AD_ACCOUNT_ID || '').replace(/^act_/, '');
+
+function httpsGetJson(url) {
+  return new Promise((resolve, reject) => {
+    https.get(url, res => {
+      let data = '';
+      res.on('data', chunk => data += chunk);
+      res.on('end', () => {
+        try {
+          const json = JSON.parse(data);
+          resolve(json);
+        } catch (err) {
+          reject(new Error(`Failed to parse Meta API response: ${err.message}`));
+        }
+      });
+    }).on('error', reject);
+  });
+}
+
+/**
+ * 1. List all campaigns in the Meta Ad Account
+ */
+async function listCampaigns() {
+  const token = getAccessToken();
+  const adAccountId = getAdAccountId();
+
+  if (!token || !adAccountId) {
+    return {
+      success: false,
+      error: 'META_PAGE_ACCESS_TOKEN or META_AD_ACCOUNT_ID is not configured in .env',
+      campaigns: []
+    };
+  }
+
+  try {
+    const url = `https://graph.facebook.com/v19.0/act_${encodeURIComponent(adAccountId)}/campaigns?fields=id,name,status,objective,start_time&limit=50&access_token=${encodeURIComponent(token)}`;
+    const result = await httpsGetJson(url);
+
+    if (result.error) {
+      console.warn('[Meta API Error in listCampaigns]:', result.error.message);
+      return { success: false, error: result.error.message, campaigns: [] };
+    }
+
+    const campaigns = (result.data || []).map(c => ({
+      id: c.id,
+      name: c.name,
+      status: c.status,
+      objective: c.objective,
+      start_time: c.start_time
+    }));
+
+    return { success: true, campaigns };
+  } catch (err) {
+    console.error('[Meta Marketing API Error]:', err.message);
+    return { success: false, error: err.message, campaigns: [] };
+  }
+}
+
+/**
+ * 2. Get full analytics for a specific Campaign ID
+ * Pulls overall campaign metrics, adset breakdowns, ad-level breakdowns,
+ * and matches with on-site visitor sessions from SQLite.
+ */
+async function getCampaignAnalytics(campaignId, datePreset = 'maximum') {
+  const token = getAccessToken();
+
+  if (!token) {
+    return { success: false, error: 'META_PAGE_ACCESS_TOKEN is not configured.' };
+  }
+
+  if (!campaignId) {
+    return { success: false, error: 'Campaign ID is required.' };
+  }
+
+  try {
+    // 1. Fetch Campaign Info
+    const campaignInfoUrl = `https://graph.facebook.com/v19.0/${encodeURIComponent(campaignId)}?fields=id,name,status,objective,start_time&access_token=${encodeURIComponent(token)}`;
+    
+    // 2. Fetch Campaign-Level Insights
+    const campaignInsightsUrl = `https://graph.facebook.com/v19.0/${encodeURIComponent(campaignId)}/insights?fields=spend,impressions,clicks,cpc,ctr,cpm,reach,actions,cost_per_action_type&date_preset=${encodeURIComponent(datePreset)}&access_token=${encodeURIComponent(token)}`;
+
+    // 3. Fetch AdSet-Level Insights
+    const adsetInsightsUrl = `https://graph.facebook.com/v19.0/${encodeURIComponent(campaignId)}/insights?level=adset&fields=adset_id,adset_name,spend,impressions,clicks,cpc,ctr,reach&date_preset=${encodeURIComponent(datePreset)}&access_token=${encodeURIComponent(token)}`;
+
+    // 4. Fetch Ad-Level Insights
+    const adInsightsUrl = `https://graph.facebook.com/v19.0/${encodeURIComponent(campaignId)}/insights?level=ad&fields=ad_id,ad_name,adset_id,adset_name,spend,impressions,clicks,cpc,ctr,reach&date_preset=${encodeURIComponent(datePreset)}&access_token=${encodeURIComponent(token)}`;
+
+    const [campaignRes, insightsRes, adsetRes, adRes] = await Promise.all([
+      httpsGetJson(campaignInfoUrl),
+      httpsGetJson(campaignInsightsUrl),
+      httpsGetJson(adsetInsightsUrl),
+      httpsGetJson(adInsightsUrl)
+    ]);
+
+    if (campaignRes.error) {
+      return { success: false, error: campaignRes.error.message };
+    }
+
+    const campaignInfo = campaignRes;
+    const overallInsight = insightsRes.data && insightsRes.data.length > 0 ? insightsRes.data[0] : null;
+
+    const adsets = (adsetRes.data || []).map(as => ({
+      adset_id: as.adset_id,
+      adset_name: as.adset_name,
+      spend: parseFloat(as.spend || 0).toFixed(2),
+      impressions: parseInt(as.impressions || 0, 10),
+      clicks: parseInt(as.clicks || 0, 10),
+      cpc: parseFloat(as.cpc || 0).toFixed(2),
+      ctr: parseFloat(as.ctr || 0).toFixed(2),
+      reach: parseInt(as.reach || 0, 10)
+    }));
+
+    const ads = (adRes.data || []).map(ad => ({
+      ad_id: ad.ad_id,
+      ad_name: ad.ad_name,
+      adset_id: ad.adset_id,
+      adset_name: ad.adset_name,
+      spend: parseFloat(ad.spend || 0).toFixed(2),
+      impressions: parseInt(ad.impressions || 0, 10),
+      clicks: parseInt(ad.clicks || 0, 10),
+      cpc: parseFloat(ad.cpc || 0).toFixed(2),
+      ctr: parseFloat(ad.ctr || 0).toFixed(2),
+      reach: parseInt(ad.reach || 0, 10)
+    }));
+
+    // 5. Query Local Database for Landing Page Traffic associated with this Campaign
+    // Matches by utm_campaign, or landing_url containing campaignId
+    const localSessions = db.db.prepare(`
+      SELECT 
+        session_id, visitor_id, city, region, country, source_app,
+        device_type, browser, total_duration_sec, max_scroll_depth_pct,
+        sections_viewed, is_converted, lead_id, created_at
+      FROM visitor_sessions
+      WHERE utm_campaign LIKE ? 
+         OR landing_url LIKE ? 
+         OR (utm_source = 'meta' AND ? = '120248039512450384')
+      ORDER BY created_at DESC
+      LIMIT 100
+    `).all(`%${campaignId}%`, `%${campaignId}%`, campaignId);
+
+    const localLeads = db.db.prepare(`
+      SELECT 
+        lead_id, full_name, phone, school_name, school_role, school_city_district,
+        google_sheet_sync_status, crm_sync_status, created_at
+      FROM leads
+      WHERE utm_campaign LIKE ? 
+         OR fbclid IS NOT NULL
+      ORDER BY created_at DESC
+      LIMIT 50
+    `).all(`%${campaignId}%`);
+
+    // Aggregate Local Traffic Metrics
+    const totalWebVisits = localSessions.length;
+    const uniqueWebVisitors = new Set(localSessions.map(s => s.visitor_id)).size;
+    const totalDuration = localSessions.reduce((sum, s) => sum + (s.total_duration_sec || 0), 0);
+    const avgDuration = totalWebVisits > 0 ? Math.round(totalDuration / totalWebVisits) : 0;
+    const totalScroll = localSessions.reduce((sum, s) => sum + (s.max_scroll_depth_pct || 0), 0);
+    const avgScroll = totalWebVisits > 0 ? Math.round(totalScroll / totalWebVisits) : 0;
+    const conversions = localSessions.filter(s => s.is_converted === 1 || s.lead_id).length;
+
+    // Devices & Apps breakdown
+    const devices = {};
+    const apps = {};
+    const cities = {};
+    localSessions.forEach(s => {
+      const dev = s.device_type || 'Mobile';
+      devices[dev] = (devices[dev] || 0) + 1;
+
+      const app = s.source_app || 'Meta Ad';
+      apps[app] = (apps[app] || 0) + 1;
+
+      const city = s.city && s.city !== 'Unknown City' ? `${s.city}, ${s.region || ''}`.trim() : 'In-Transit';
+      cities[city] = (cities[city] || 0) + 1;
+    });
+
+    return {
+      success: true,
+      campaignId,
+      campaignName: campaignInfo.name,
+      status: campaignInfo.status,
+      objective: campaignInfo.objective,
+      startTime: campaignInfo.start_time,
+      datePreset,
+      metaMetrics: {
+        spend: overallInsight ? parseFloat(overallInsight.spend || 0).toFixed(2) : '0.00',
+        impressions: overallInsight ? parseInt(overallInsight.impressions || 0, 10) : 0,
+        clicks: overallInsight ? parseInt(overallInsight.clicks || 0, 10) : 0,
+        reach: overallInsight ? parseInt(overallInsight.reach || 0, 10) : 0,
+        cpc: overallInsight ? parseFloat(overallInsight.cpc || 0).toFixed(2) : '0.00',
+        ctr: overallInsight ? parseFloat(overallInsight.ctr || 0).toFixed(2) : '0.00',
+        cpm: overallInsight ? parseFloat(overallInsight.cpm || 0).toFixed(2) : '0.00'
+      },
+      adsets,
+      ads,
+      landingPageAnalytics: {
+        destinationUrl: 'https://event.mymentorcircle.com/',
+        totalVisits: totalWebVisits,
+        uniqueVisitors: uniqueWebVisitors,
+        avgDurationSec: avgDuration,
+        avgScrollPct: avgScroll,
+        conversions,
+        conversionRate: totalWebVisits > 0 ? ((conversions / totalWebVisits) * 100).toFixed(1) : '0.0',
+        devices: Object.entries(devices).map(([device, count]) => ({ device, count })),
+        apps: Object.entries(apps).map(([app, count]) => ({ app, count })),
+        topCities: Object.entries(cities).map(([city, count]) => ({ city, count })).sort((a, b) => b.count - a.count).slice(0, 8),
+        recentSessions: localSessions.slice(0, 20),
+        leads: localLeads
+      }
+    };
+
+  } catch (err) {
+    console.error('[Meta Marketing API Campaign Analytics Error]:', err);
+    return { success: false, error: err.message };
+  }
+}
+
+module.exports = {
+  listCampaigns,
+  getCampaignAnalytics
+};

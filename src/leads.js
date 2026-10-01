@@ -133,6 +133,7 @@ function validateLeadInput(data) {
  * Creates and records a new lead into the primary SQLite database.
  */
 function processNewLead(rawData, ipAddress = null) {
+  const clientIp = typeof ipAddress === 'string' ? ipAddress : (ipAddress && typeof ipAddress === 'object' ? ipAddress.clientIp || null : null);
   const validation = validateLeadInput(rawData);
   if (!validation.isValid) {
     return {
@@ -199,7 +200,8 @@ function processNewLead(rawData, ipAddress = null) {
     crm_sync_status: crm.isConfigured().configured ? 'PENDING' : 'NOT_CONFIGURED',
     is_duplicate_suspect: isDuplicateSuspect ? 1 : 0,
     duplicate_reason: duplicateReason,
-    ip_address: ipAddress,
+    ip_address: clientIp,
+    session_id: typeof rawData.session_id === 'string' ? rawData.session_id.slice(0, 100) : null,
     created_at: new Date().toISOString(),
     updated_at: new Date().toISOString()
   };

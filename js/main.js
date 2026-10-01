@@ -42,14 +42,33 @@
 })();
 
 /* ============================================================
-   Reveal on scroll (generic)
+   Executive Reveal & 3D Unfold Engine
+   Ultra-responsive, instant-triggering, zero lag on fast scrolling
    ============================================================ */
 (function(){
   const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const revealElements = document.querySelectorAll('.reveal, .reveal-unfold, .reveal-scale');
+
   if (reduce) {
-    document.querySelectorAll('.reveal').forEach(el => el.classList.add('in'));
+    revealElements.forEach(el => el.classList.add('in'));
     return;
   }
+
+  // Pre-reveal any elements already inside or near the viewport on initial load
+  const windowHeight = window.innerHeight || document.documentElement.clientHeight;
+  revealElements.forEach(el => {
+    const rect = el.getBoundingClientRect();
+    if (rect.top <= windowHeight * 0.95) {
+      el.classList.add('in');
+    }
+  });
+
+  // Responsive Root Margin:
+  // On mobile (window.innerWidth < 768), trigger 40px BEFORE element enters view (positive bottom margin)
+  // so animations are already playing as the user scrolls, eliminating blank gaps!
+  const isMobile = window.innerWidth < 768;
+  const rootMargin = isMobile ? '0px 0px 40px 0px' : '0px 0px -20px 0px';
+
   const io = new IntersectionObserver((entries) => {
     entries.forEach(e => {
       if (e.isIntersecting) {
@@ -57,8 +76,32 @@
         io.unobserve(e.target);
       }
     });
-  }, {threshold: 0.14, rootMargin: '0px 0px -8% 0px'});
-  document.querySelectorAll('.reveal').forEach(el => io.observe(el));
+  }, {
+    threshold: 0.04, // Snappy trigger as soon as top 4% or few pixels touch view
+    rootMargin: rootMargin
+  });
+
+  revealElements.forEach(el => {
+    if (!el.classList.contains('in')) {
+      io.observe(el);
+    }
+  });
+
+  // Rapid scroll safety fallback: If user flings / scrolls quickly, check remaining elements
+  let scrollTimeout;
+  window.addEventListener('scroll', () => {
+    clearTimeout(scrollTimeout);
+    scrollTimeout = setTimeout(() => {
+      const vh = window.innerHeight || document.documentElement.clientHeight;
+      document.querySelectorAll('.reveal:not(.in), .reveal-unfold:not(.in), .reveal-scale:not(.in)').forEach(el => {
+        const r = el.getBoundingClientRect();
+        if (r.top <= vh) {
+          el.classList.add('in');
+          io.unobserve(el);
+        }
+      });
+    }, 70);
+  }, { passive: true });
 })();
 
 /* ============================================================
@@ -838,7 +881,8 @@ document.getElementById('year').textContent = new Date().getFullYear();
         utm_campaign: attribution.utm_campaign,
         utm_content: attribution.utm_content,
         utm_term: attribution.utm_term,
-        fbclid: attribution.fbclid
+        fbclid: attribution.fbclid,
+        session_id: (window.MMCTracker && window.MMCTracker.getSessionId) ? window.MMCTracker.getSessionId() : null
       };
 
       const submitBtn = form.querySelector('.form-submit-btn');
@@ -877,10 +921,14 @@ document.getElementById('year').textContent = new Date().getFullYear();
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(canonicalPayload)
           });
+          const resData = await res.json().catch(() => ({}));
           if (res.ok) {
+            if (window.MMCTracker && resData.lead_id) {
+              window.MMCTracker.setLeadConverted(resData.lead_id);
+            }
             handleSuccess(form, canonicalPayload, false);
           } else {
-            throw new Error('Server returned ' + res.status);
+            throw new Error(resData.message || ('Server returned ' + res.status));
           }
         }
       } catch (err) {
@@ -894,7 +942,7 @@ document.getElementById('year').textContent = new Date().getFullYear();
         submitBtn.disabled = false;
         if (spinner) spinner.style.display = 'none';
         if (icon) icon.style.display = 'inline-block';
-        if (btnText) btnText.textContent = 'Submit School Details';
+        if (btnText) btnText.textContent = submitBtn.dataset.defaultText || "Check My School's Eligibility";
       }
     });
   });
@@ -986,9 +1034,9 @@ document.getElementById('year').textContent = new Date().getFullYear();
       if (titleEl) titleEl.textContent = 'Request the Programme Topic Catalogue';
       if (descEl) descEl.textContent = 'Enter your school details to receive the comprehensive Topic Catalogue (PDF) and grant eligibility information.';
     } else {
-      if (badgeSpan) badgeSpan.textContent = 'School Grant Enquiry · 2027–28';
-      if (titleEl) titleEl.textContent = "Make career readiness part of your school's plan.";
-      if (descEl) descEl.textContent = "Submit your school's details to check eligibility for the MMC Career Readiness Grant™ and explore how your school can participate.";
+      if (badgeSpan) badgeSpan.textContent = 'Institutional Grant Enquiry · Up to ₹2 Lakh';
+      if (titleEl) titleEl.textContent = 'Check If Your School Qualifies for Up to ₹2,00,000';
+      if (descEl) descEl.textContent = 'Submit your school details to check qualification for the MMC Career Readiness Grant™ 2027–28 (₹25,000 to ₹2,00,000) and explore verified implementation steps.';
     }
 
     // Synchronize latest in-memory state before opening
@@ -1173,5 +1221,55 @@ document.getElementById('year').textContent = new Date().getFullYear();
       }
     });
   });
+
+  /* ============================================================
+     11. STICKY GRANT CONVERSION CTA CONTROLLER
+     ============================================================ */
+  (function initStickyGrantCta() {
+    const stickyCta = document.getElementById('stickyGrantCta');
+    const heroSec = document.getElementById('top');
+    if (!stickyCta) return;
+
+    if ('IntersectionObserver' in window && heroSec) {
+      const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+          // When hero is NOT intersecting (user scrolled past hero), show sticky CTA
+          if (!entry.isIntersecting) {
+            stickyCta.classList.add('is-visible');
+          } else {
+            stickyCta.classList.remove('is-visible');
+          }
+        });
+      }, { threshold: 0.1 });
+      observer.observe(heroSec);
+    } else {
+      // Fallback scroll listener
+      const onScroll = () => {
+        if (window.scrollY > 450) {
+          stickyCta.classList.add('is-visible');
+        } else {
+          stickyCta.classList.remove('is-visible');
+        }
+      };
+      window.addEventListener('scroll', onScroll, { passive: true });
+      onScroll();
+    }
+
+    // Smooth scroll when clicking the sticky CTA button
+    const stickyBtn = document.getElementById('stickyCtaBtn');
+    if (stickyBtn) {
+      stickyBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        const contactSec = document.getElementById('contact');
+        if (contactSec) {
+          contactSec.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          setTimeout(() => {
+            const firstInp = contactSec.querySelector('input[name="full_name"]');
+            if (firstInp) firstInp.focus();
+          }, 600);
+        }
+      });
+    }
+  })();
 
 })();

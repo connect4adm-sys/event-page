@@ -33,3 +33,35 @@ export async function onRequestGet(context) {
     return json({ success: false, message: 'Failed to retrieve lead details.' }, 500);
   }
 }
+
+export async function onRequestDelete(context) {
+  const { request, env, params } = context;
+
+  const session = await verifyAdminSession(request, env);
+  if (!session) {
+    return json({ success: false, message: 'Unauthorized. Administrative session required.' }, 401);
+  }
+
+  const leadId = params.id;
+  if (!leadId) {
+    return json({ success: false, message: 'Lead ID is required.' }, 400);
+  }
+
+  try {
+    if (!env || !env.DB) {
+      return json({ success: false, message: 'Database binding not available.' }, 500);
+    }
+
+    // Delete associated sync logs and lead record
+    await env.DB.prepare('DELETE FROM sync_logs WHERE lead_id = ?').bind(leadId).run();
+    const result = await env.DB.prepare('DELETE FROM leads WHERE lead_id = ?').bind(leadId).run();
+
+    return json({
+      success: true,
+      message: `Lead ${leadId} deleted successfully.`
+    }, 200);
+  } catch (err) {
+    console.error('Delete lead error:', err);
+    return json({ success: false, message: 'Failed to delete lead: ' + err.message }, 500);
+  }
+}

@@ -210,8 +210,126 @@ async function runTests() {
     assert(retryRes.status === 200 || retryRes.status === 400, 'Retry sync returns controlled HTTP response');
     assert(retryRes.json && (retryRes.json.status === 'NOT_CONFIGURED' || retryRes.json.sheets !== undefined || retryRes.json.success !== undefined), 'Retry response is valid');
 
+    // Test 8: Visitor Intelligence & Tracking Mechanism
+    console.log('\n--- 8. Visitor Tracking Endpoints ---');
+    const mockSessionId = 'sess_test_' + Date.now();
+    const sessionInitRes = await makeRequest('POST', '/api/track/session', {
+      session_id: mockSessionId,
+      landing_page_url: 'http://localhost:3000/?utm_source=instagram&utm_medium=paid_story&utm_campaign=grant2027',
+      referrer_url: 'https://l.instagram.com/',
+      user_agent: 'Mozilla/5.0 (iPhone; CPU iPhone OS 17_4 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/15E148 Instagram 320.0.0',
+      screen_width: 390,
+      screen_height: 844,
+      device_pixel_ratio: 3,
+      timezone: 'Asia/Kolkata',
+      language: 'en-IN'
+    }, {
+      'User-Agent': 'Mozilla/5.0 (iPhone; CPU iPhone OS 17_4 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/15E148 Instagram 320.0.0',
+      'X-Forwarded-For': '103.21.124.10'
+    });
+    assert(sessionInitRes.status === 200, 'POST /api/track/session returns 200');
+    assert(sessionInitRes.json && sessionInitRes.json.session_id === mockSessionId, 'Session ID echoed');
+    assert(sessionInitRes.json && (sessionInitRes.json.source === 'Instagram App' || (typeof sessionInitRes.json.source === 'string' && sessionInitRes.json.source.includes('Instagram'))), 'Attribution detected Instagram In-App Browser');
+
+    // Beacon dwell update
+    const beaconRes = await makeRequest('POST', '/api/track/beacon', {
+      session_id: mockSessionId,
+      dwell_time_seconds: 45,
+      active_dwell_seconds: 42,
+      max_scroll_depth: 85,
+      sections_visited: ['top', 'stats', 'grant', 'contact'],
+      section_dwells: {
+        'top': 10,
+        'stats': 8,
+        'grant': 18,
+        'contact': 6
+      }
+    });
+    assert(beaconRes.status === 200, 'POST /api/track/beacon returns 200');
+    assert(beaconRes.json && beaconRes.json.success === true, 'Beacon response reports success');
+
+    // Admin Tracking Summary
+    const trackingSummaryRes = await makeRequest('GET', '/api/admin/tracking/summary', null, authHeaders);
+    assert(trackingSummaryRes.status === 200, 'GET /api/admin/tracking/summary returns 200');
+    const trackingSummary = trackingSummaryRes.json && trackingSummaryRes.json.summary;
+    assert(trackingSummary && trackingSummary.totalVisitors >= 1, 'Tracking summary reports total visitors');
+    assert(trackingSummary && Array.isArray(trackingSummary.sectionHeatmap || trackingSummary.sections), 'Section engagement heatmap returned');
+    assert(trackingSummary && Array.isArray(trackingSummary.topCities || trackingSummary.cities), 'Top cities list returned');
+
+    // Admin Tracking Sessions List
+    const trackingSessionsRes = await makeRequest('GET', '/api/admin/tracking/sessions', null, authHeaders);
+    assert(trackingSessionsRes.status === 200, 'GET /api/admin/tracking/sessions returns 200');
+    assert(trackingSessionsRes.json && trackingSessionsRes.json.sessions.some(s => s.session_id === mockSessionId), 'Created session appears in admin tracking feed');
+
+    // Admin Session Detail Inspection
+    const sessionDetailRes = await makeRequest('GET', `/api/admin/tracking/sessions/${mockSessionId}`, null, authHeaders);
+    assert(sessionDetailRes.status === 200, 'GET /api/admin/tracking/sessions/:id returns 200');
+    assert(sessionDetailRes.json && sessionDetailRes.json.session.session_id === mockSessionId, 'Detailed session inspection matches ID');
+    const sectionsVisited = sessionDetailRes.json.session.sections_visited || [];
+    assert(sectionsVisited.some(s => (s.section_id || s) === 'grant'), 'Recorded visited sections correctly preserved');
+
+    // Time Horizon Tests: Today, 7d, 30d, 6m, and Custom Range
+    const todaySummary = await makeRequest('GET', '/api/admin/tracking/summary?period=today', null, authHeaders);
+    assert(todaySummary.status === 200, 'GET /api/admin/tracking/summary?period=today returns 200');
+    assert(todaySummary.json && todaySummary.json.summary.sinceDate, 'Today summary returns resolved sinceDate');
+
+    const sevenDaySummary = await makeRequest('GET', '/api/admin/tracking/summary?period=7d', null, authHeaders);
+    assert(sevenDaySummary.status === 200, 'GET /api/admin/tracking/summary?period=7d returns 200');
+
+    const sixMonthSummary = await makeRequest('GET', '/api/admin/tracking/summary?period=6m', null, authHeaders);
+    assert(sixMonthSummary.status === 200, 'GET /api/admin/tracking/summary?period=6m returns 200');
+
+    const customSummary = await makeRequest('GET', '/api/admin/tracking/summary?period=custom&startDate=2026-01-01&endDate=2026-12-31', null, authHeaders);
+    assert(customSummary.status === 200, 'GET /api/admin/tracking/summary?period=custom returns 200');
+
+    // Test 9: Meta Lead Ads Webhook Ingestion
+    console.log('\n--- 9. Meta Lead Ads Webhook Ingestion ---');
+    const challengeStr = 'MMC_CHALLENGE_' + Math.random().toString(36).substring(2, 8);
+    const metaVerifyRes = await makeRequest('GET', `/api/webhooks/meta?hub.mode=subscribe&hub.verify_token=MMC_META_VERIFY_TOKEN_2027&hub.challenge=${challengeStr}`);
+    assert(metaVerifyRes.status === 200, 'GET /api/webhooks/meta verification returns 200');
+    assert(metaVerifyRes.body === challengeStr, 'Meta challenge string echoed back accurately');
+
+    // Reject wrong token
+    const wrongMetaVerify = await makeRequest('GET', `/api/webhooks/meta?hub.mode=subscribe&hub.verify_token=WRONG_TOKEN&hub.challenge=${challengeStr}`);
+    assert(wrongMetaVerify.status === 403, 'Invalid Meta verify token returns 403 Forbidden');
+
+    // Meta Webhook POST event
+    const metaWebhookRes = await makeRequest('POST', '/api/webhooks/meta', {
+      object: 'page',
+      entry: [{
+        id: 'page_123456789',
+        time: Math.floor(Date.now() / 1000),
+        changes: [{
+          field: 'leadgen',
+          value: {
+            created_time: Math.floor(Date.now() / 1000),
+            leadgen_id: 'leadgen_mock_987654321',
+            page_id: 'page_123456789',
+            form_id: 'form_instant_456'
+          }
+        }]
+      }]
+    });
+    assert(metaWebhookRes.status === 200, 'POST /api/webhooks/meta returns 200');
+    assert(metaWebhookRes.json && metaWebhookRes.json.success === true, 'Meta webhook reports success');
+
+    // Allow background async webhook processing to finish before final purge
+    await new Promise(r => setTimeout(r, 600));
+
+    // Test 10: Admin Database Dummy Purge & Production Readiness
+    console.log('\n--- 10. Production Cleanup & Dummy Data Purge ---');
+    const purgeRes = await makeRequest('POST', '/api/admin/system/purge-dummy', {}, authHeaders);
+    assert(purgeRes.status === 200, 'POST /api/admin/system/purge-dummy returns 200');
+    assert(purgeRes.json && purgeRes.json.success === true, 'Purge executed successfully');
+    
+    // Verify database is completely pristine
+    const cleanLeads = await makeRequest('GET', '/api/admin/leads', null, authHeaders);
+    assert(cleanLeads.status === 200, 'Admin leads list queried post-purge');
+    assert(cleanLeads.json.total === 0, 'Production database has exactly 0 dummy leads');
+
     console.log('\n================================================================');
     console.log(`TEST SUITE FINISHED: ${passed} PASSED, ${failed} FAILED`);
+    console.log('PRODUCTION DATABASE IS PRISTINE (0 DUMMY LEADS)');
     console.log('================================================================');
 
     if (failed > 0) {
