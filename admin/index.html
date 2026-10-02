@@ -615,10 +615,13 @@ tr:hover td {
 <!-- Streamlined 4-Tab Navigation -->
 <nav class="admin-nav" role="tablist">
   <button class="nav-tab is-active" data-target="pane-overview" role="tab">
-    📊 Overview &amp; Analytics
+    📊 Overview &amp; Key Metrics
   </button>
   <button class="nav-tab" data-target="pane-leads" role="tab">
     👥 Leads Management
+  </button>
+  <button class="nav-tab" data-target="pane-visitors" role="tab">
+    🌐 Independent Visitor Activity
   </button>
   <button class="nav-tab" data-target="pane-meta" role="tab">
     🎯 Meta Ads Intelligence
@@ -873,6 +876,142 @@ tr:hover td {
   <!-- ========================================================
        TAB 3: META ADS INTELLIGENCE
        ======================================================== -->
+  
+  <!-- ========================================================
+       TAB 3: INDEPENDENT VISITOR ACTIVITY & TELEMETRY
+       ======================================================== -->
+  <section class="tab-pane" id="pane-visitors">
+
+    <!-- Time Horizon Filter Toolbar -->
+    <div class="filter-toolbar">
+      <div class="time-preset-group">
+        <span style="font-size:12.5px;font-weight:700;color:var(--navy);margin-right:4px;">Activity Period:</span>
+        <button type="button" class="btn-time-preset is-active" data-vperiod="today">Today</button>
+        <button type="button" class="btn-time-preset" data-vperiod="yesterday">Yesterday</button>
+        <button type="button" class="btn-time-preset" data-vperiod="7d">Last 7 Days</button>
+        <button type="button" class="btn-time-preset" data-vperiod="30d">Last 30 Days</button>
+        <button type="button" class="btn-time-preset" data-vperiod="custom">Custom Range</button>
+      </div>
+
+      <div class="custom-date-box" id="visitorCustomRangeBox" style="display:none;">
+        <span style="font-size:12px;font-weight:600;color:var(--muted);">From:</span>
+        <input type="date" id="visitorStartDateInput" class="form-date" />
+        <span style="font-size:12px;font-weight:600;color:var(--muted);">To:</span>
+        <input type="date" id="visitorEndDateInput" class="form-date" />
+        <button type="button" class="btn-action btn-primary" id="btnApplyVisitorCustomRange" style="padding:4px 10px;font-size:12px;">Apply</button>
+      </div>
+
+      <div style="margin-left:auto;display:flex;align-items:center;gap:8px;">
+        <span class="live-indicator"></span>
+        <span style="font-size:11.5px;color:var(--muted);font-weight:600;">Ground-Truth First-Party Telemetry</span>
+      </div>
+    </div>
+
+    <!-- Visitor Activity KPI Cards -->
+    <div class="metrics-grid">
+      <div class="metric-card">
+        <span class="label">Total Visits (Sessions)</span>
+        <div class="val" id="visTotalSessions">0</div>
+        <span class="sub">Total landing page loads</span>
+      </div>
+      <div class="metric-card">
+        <span class="label">Unique Visitors</span>
+        <div class="val" id="visTotalVisitors">0</div>
+        <span class="sub">Distinct human individuals</span>
+      </div>
+      <div class="metric-card">
+        <span class="label">Average Dwell Time</span>
+        <div class="val" id="visAvgDuration">0s</div>
+        <span class="sub">Time spent studying grant</span>
+      </div>
+      <div class="metric-card">
+        <span class="label">Average Scroll Depth</span>
+        <div class="val" id="visAvgScroll">0%</div>
+        <span class="sub">Page depth traversed</span>
+      </div>
+      <div class="metric-card">
+        <span class="label">On-Site Conversions</span>
+        <div class="val" id="visConversions" style="color:var(--success);">0 (0.0%)</div>
+        <span class="sub">Visitors who submitted grant form</span>
+      </div>
+    </div>
+
+    <!-- Section Attention Heatmap & Geography -->
+    <div style="display:grid;grid-template-columns:2fr 1fr;gap:20px;margin-bottom:20px;">
+      
+      <!-- Section Attention Heatmap Table -->
+      <div class="panel-card">
+        <h3 class="panel-title">
+          <span>Landing Page Section Attention &amp; Dwell Time</span>
+          <small>Section Telemetry</small>
+        </h3>
+        <p style="font-size:12px;color:var(--muted);margin-bottom:12px;">
+          Measures exact time visitors spend reading each part of the grant landing page (Hero, ₹2L Grant Ladder, 10 Point Activities, etc.).
+        </p>
+        <div class="table-wrap" style="box-shadow:none;border-radius:8px;">
+          <table>
+            <thead>
+              <tr>
+                <th style="width:38%;">Page Section</th>
+                <th style="width:20%;">Total Time Spent</th>
+                <th style="width:16%;">Total Views</th>
+                <th style="width:26%;">Attention Share</th>
+              </tr>
+            </thead>
+            <tbody id="visHeatmapBody">
+              <tr><td colspan="4" style="text-align:center;padding:16px;color:var(--muted);">Loading section telemetry...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Top Visitor Cities -->
+      <div class="panel-card">
+        <h3 class="panel-title">
+          <span>Top Visitor Geographies</span>
+          <small>Resolved Cities</small>
+        </h3>
+        <p style="font-size:12px;color:var(--muted);margin-bottom:12px;">
+          Locations where visitors are located when browsing event.mymentorcircle.com.
+        </p>
+        <div class="list-breakdown" id="visCitiesList" style="max-height:360px;overflow-y:auto;">
+          <p style="color:var(--muted);font-size:12px;padding:8px 0;">Loading cities...</p>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Real-Time Live Visitor Feed -->
+    <div class="panel-card">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;flex-wrap:wrap;gap:8px;">
+        <h3 class="panel-title" style="margin:0;">
+          <span>Live Visitor Stream Feed</span>
+          <small>Real-Time Activity</small>
+        </h3>
+        <span id="visSessionsCountBadge" class="badge" style="background:var(--soft);color:var(--navy);font-weight:700;">0 Sessions Recorded</span>
+      </div>
+      <div class="table-wrap" style="box-shadow:none;border-radius:8px;max-height:420px;overflow-y:auto;">
+        <table>
+          <thead>
+            <tr>
+              <th>Arrival Time</th>
+              <th>Visitor ID / City</th>
+              <th>Traffic Channel &amp; Source</th>
+              <th>Device &amp; Browser</th>
+              <th>Time on Site</th>
+              <th>Scroll %</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody id="visLiveSessionsBody">
+            <tr><td colspan="7" style="text-align:center;padding:16px;color:var(--muted);">Loading live visitor stream...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </section>
+
   <section class="tab-pane" id="pane-meta">
     
     <!-- Meta Campaign Explorer Card -->
@@ -934,6 +1073,7 @@ tr:hover td {
             <span id="campResultObjective" style="font-size:11px;font-weight:700;color:var(--blue);background:rgba(23,105,170,0.08);padding:3px 8px;border-radius:4px;">OUTCOME_LEADS</span>
           </div>
 
+          <div id="campGoalMetricBox"></div>
           <!-- Campaign Top Metrics -->
           <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(130px, 1fr));gap:10px;">
             <div style="background:var(--soft);padding:10px 12px;border-radius:6px;">
@@ -988,106 +1128,7 @@ tr:hover td {
                 <tr><td colspan="7" style="text-align:center;padding:16px;color:var(--muted);">Select or enter a campaign to view ad-level results.</td></tr>
               </tbody>
             </table>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- Dual Campaign Side-by-Side View -->
-    <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(360px, 1fr));gap:20px;">
-      
-      <!-- Campaign 1: Instant Forms -->
-      <div class="panel-card" style="border-top:3px solid var(--blue);">
-        <div style="border-bottom:1px solid var(--line);padding-bottom:10px;margin-bottom:12px;">
-          <div style="display:flex;align-items:center;justify-content:space-between;">
-            <h3 style="font-family:'Manrope',sans-serif;font-size:15px;font-weight:800;color:var(--navy);margin:0;">
-              Campaign 1: Meta Instant Forms (On-Platform)
-            </h3>
-            <span class="badge badge-synced">Form C Only</span>
-          </div>
-          <p style="font-size:12px;color:var(--muted);margin-top:4px;">
-            Leads submitted directly inside Instagram/Facebook forms. Automatically forwarded to Google Sheets and LeadsZone CRM.
-          </p>
-        </div>
-
-        <div style="display:flex;gap:10px;margin-bottom:14px;">
-          <div style="background:var(--soft);padding:8px 12px;border-radius:6px;flex:1;">
-            <span style="font-size:11px;color:var(--muted);font-weight:700;display:block;">Total Leads</span>
-            <b id="metaInstantTotal" style="font-size:20px;color:var(--blue);">0</b>
-          </div>
-          <div style="background:var(--soft);padding:8px 12px;border-radius:6px;flex:1;">
-            <span style="font-size:11px;color:var(--muted);font-weight:700;display:block;">Today</span>
-            <b id="metaInstantToday" style="font-size:20px;color:var(--navy);">0</b>
-          </div>
-          <div style="background:var(--soft);padding:8px 12px;border-radius:6px;flex:1;">
-            <span style="font-size:11px;color:var(--muted);font-weight:700;display:block;">Sync Rate</span>
-            <b id="metaInstantSyncRate" style="font-size:16px;color:var(--success);">100%</b>
-          </div>
-        </div>
-
-        <h4 style="font-size:13px;font-weight:700;color:var(--navy);margin-bottom:8px;">Recent Form C Applications</h4>
-        <div class="table-wrap" style="max-height:280px;overflow-y:auto;box-shadow:none;border-radius:6px;">
-          <table>
-            <thead>
-              <tr>
-                <th>Applicant</th>
-                <th>Phone / Email</th>
-                <th>School &amp; City</th>
-                <th>Sync Status</th>
-              </tr>
-            </thead>
-            <tbody id="metaInstantLeadsBody">
-              <tr><td colspan="4" style="text-align:center;padding:16px;color:var(--muted);">No Instant Form leads in this period.</td></tr>
-            </tbody>
-          </table>
-        </div>
-      </div>
-
-      <!-- Campaign 2: Website Traffic -->
-      <div class="panel-card" style="border-top:3px solid var(--success);">
-        <div style="border-bottom:1px solid var(--line);padding-bottom:10px;margin-bottom:12px;">
-          <div style="display:flex;align-items:center;justify-content:space-between;">
-            <h3 style="font-family:'Manrope',sans-serif;font-size:15px;font-weight:800;color:var(--navy);margin:0;">
-              Campaign 2: Website Visits (event.mymentorcircle.com)
-            </h3>
-            <span class="badge badge-synced">On-Site Traffic</span>
-          </div>
-          <p style="font-size:12px;color:var(--muted);margin-top:4px;">
-            Visitors clicking from Instagram/Facebook to <b>event.mymentorcircle.com</b>, studying grant sections and applying on-site.
-          </p>
-        </div>
-
-        <div style="display:flex;gap:10px;margin-bottom:14px;">
-          <div style="background:var(--soft);padding:8px 12px;border-radius:6px;flex:1;">
-            <span style="font-size:11px;color:var(--muted);font-weight:700;display:block;">Ad Clicks</span>
-            <b id="metaWebClicks" style="font-size:20px;color:var(--navy);">0</b>
-          </div>
-          <div style="background:var(--soft);padding:8px 12px;border-radius:6px;flex:1;">
-            <span style="font-size:11px;color:var(--muted);font-weight:700;display:block;">Unique Visitors</span>
-            <b id="metaWebUnique" style="font-size:20px;color:var(--blue);">0</b>
-          </div>
-          <div style="background:var(--soft);padding:8px 12px;border-radius:6px;flex:1;">
-            <span style="font-size:11px;color:var(--muted);font-weight:700;display:block;">Conversions</span>
-            <b id="metaWebConversions" style="font-size:20px;color:var(--success);">0</b>
-          </div>
-        </div>
-
-        <h4 style="font-size:13px;font-weight:700;color:var(--navy);margin-bottom:8px;">Live Meta Ad Visitors Stream</h4>
-        <div class="table-wrap" style="max-height:280px;overflow-y:auto;box-shadow:none;border-radius:6px;">
-          <table>
-            <thead>
-              <tr>
-                <th>Arrival Time</th>
-                <th>Location</th>
-                <th>App / Device</th>
-                <th>Dwell</th>
-                <th>Outcome</th>
-              </tr>
-            </thead>
-            <tbody id="metaWebSessionsBody">
-              <tr><td colspan="5" style="text-align:center;padding:16px;color:var(--muted);">No Meta website visitors recorded yet.</td></tr>
-            </tbody>
-          </table>
+          </div>>
         </div>
       </div>
 
@@ -1223,6 +1264,7 @@ tr:hover td {
 
       if (targetId === 'pane-overview') loadOverview();
       if (targetId === 'pane-leads') loadLeads();
+      if (targetId === 'pane-visitors') loadVisitorActivity();
       if (targetId === 'pane-meta') loadMetaAttribution();
       if (targetId === 'pane-integrations') loadIntegrations();
     });
@@ -1713,78 +1755,158 @@ tr:hover td {
   // -------------------------------------------------------------
   let metaListLoaded = false;
 
-  async function loadMetaAttribution() {
+  
+  // -------------------------------------------------------------
+  // TAB 3: INDEPENDENT VISITOR ACTIVITY & TELEMETRY
+  // -------------------------------------------------------------
+  let currentVisitorPeriod = 'today';
+
+  // Visitor Period Toolbar Button Listeners
+  document.querySelectorAll('[data-vperiod]').forEach(btn => {
+    btn.addEventListener('click', function() {
+      document.querySelectorAll('[data-vperiod]').forEach(b => b.classList.remove('is-active'));
+      this.classList.add('is-active');
+      const p = this.dataset.vperiod;
+      const customBox = document.getElementById('visitorCustomRangeBox');
+      if (p === 'custom') {
+        if (customBox) customBox.style.display = 'flex';
+      } else {
+        if (customBox) customBox.style.display = 'none';
+        loadVisitorActivity(p);
+      }
+    });
+  });
+
+  document.getElementById('btnApplyVisitorCustomRange')?.addEventListener('click', () => {
+    const s = document.getElementById('visitorStartDateInput')?.value;
+    const e = document.getElementById('visitorEndDateInput')?.value;
+    if (!s && !e) { alert('Please select a date range.'); return; }
+    loadVisitorActivity('custom', s, e);
+  });
+
+  async function loadVisitorActivity(period = currentVisitorPeriod, startDate = '', endDate = '') {
+    currentVisitorPeriod = period;
+
+    let url = `/api/admin/tracking/summary?period=${encodeURIComponent(period)}`;
+    if (period === 'custom') {
+      const s = startDate || document.getElementById('visitorStartDateInput')?.value || '';
+      const e = endDate || document.getElementById('visitorEndDateInput')?.value || '';
+      if (s) url += `&startDate=${encodeURIComponent(s)}`;
+      if (e) url += `&endDate=${encodeURIComponent(e)}`;
+    }
+
     try {
-      const res = await fetch('/api/admin/reports/meta?period=30d');
+      const res = await fetch(url);
       if (res.status === 401) { window.location.href = '/admin/login'; return; }
       const data = await res.json();
+      const s = data.summary || {};
 
-      const instant = data.instantFormsCampaign || {};
-      const web = data.websiteTrafficCampaign || {};
+      if (document.getElementById('visTotalSessions')) document.getElementById('visTotalSessions').textContent = (s.totalSessions || 0).toLocaleString();
+      if (document.getElementById('visTotalVisitors')) document.getElementById('visTotalVisitors').textContent = (s.totalVisitors || 0).toLocaleString();
+      if (document.getElementById('visAvgDuration')) document.getElementById('visAvgDuration').textContent = formatDuration(s.avgDurationSec || 0);
+      if (document.getElementById('visAvgScroll')) document.getElementById('visAvgScroll').textContent = `${s.avgScrollPct || 0}%`;
+      if (document.getElementById('visConversions')) document.getElementById('visConversions').textContent = `${s.totalConversions || 0} (${s.conversionRate || '0.0'}%)`;
 
-      // Campaign 1: Instant Forms
-      const instTotalEl = document.getElementById('metaInstantTotal');
-      if (instTotalEl) instTotalEl.textContent = (instant.totalLeads || 0).toLocaleString();
-      const instTodayEl = document.getElementById('metaInstantToday');
-      if (instTodayEl) instTodayEl.textContent = (instant.todayLeads || 0).toLocaleString();
-      const instSyncEl = document.getElementById('metaInstantSyncRate');
-      if (instSyncEl) {
-        const rate = instant.totalLeads > 0 
-          ? Math.round(((instant.sheetsSynced + instant.crmSynced) / (instant.totalLeads * 2)) * 100) 
-          : 100;
-        instSyncEl.textContent = `${rate}% Synced`;
-      }
-
-      const instBody = document.getElementById('metaInstantLeadsBody');
-      if (instBody) {
-        if (instant.leads && instant.leads.length > 0) {
-          instBody.innerHTML = instant.leads.map(l => `
-            <tr>
-              <td><b>${escapeHtml(l.full_name)}</b><br><small style="color:var(--muted);">${escapeHtml(l.school_role)}</small></td>
-              <td><b>${escapeHtml(l.phone)}</b><br><small style="color:var(--muted);">${escapeHtml(l.email || 'None')}</small></td>
-              <td><b>${escapeHtml(l.school_name)}</b><br><small style="color:var(--muted);">${escapeHtml(l.school_city_district)}</small></td>
-              <td><span class="badge badge-synced">SYNCED</span></td>
-            </tr>
-          `).join('');
+      // Section Attention Heatmap
+      const hmBody = document.getElementById('visHeatmapBody');
+      if (hmBody) {
+        const sections = s.sectionHeatmap || [];
+        if (sections.length === 0) {
+          hmBody.innerHTML = '<tr><td colspan="4" style="text-align:center;padding:20px;color:var(--muted);">No section attention recorded in this period yet.</td></tr>';
         } else {
-          instBody.innerHTML = '<tr><td colspan="4" style="text-align:center;padding:16px;color:var(--muted);">No Instant Form leads received yet.</td></tr>';
-        }
-      }
-
-      // Campaign 2: Website Traffic
-      const webClicksEl = document.getElementById('metaWebClicks');
-      if (webClicksEl) webClicksEl.textContent = (web.totalClicks || 0).toLocaleString();
-      const webUniqueEl = document.getElementById('metaWebUnique');
-      if (webUniqueEl) webUniqueEl.textContent = (web.uniqueVisitors || 0).toLocaleString();
-      const webConvEl = document.getElementById('metaWebConversions');
-      if (webConvEl) webConvEl.textContent = (web.onSiteConversions || 0).toLocaleString();
-
-      const webBody = document.getElementById('metaWebSessionsBody');
-      if (webBody) {
-        if (web.recentSessions && web.recentSessions.length > 0) {
-          webBody.innerHTML = web.recentSessions.map(s => {
-            const dateStr = new Date(s.created_at).toLocaleString('en-IN', { dateStyle: 'short', timeStyle: 'short' });
+          const maxDwell = Math.max(...sections.map(x => x.total_dwell_sec), 1);
+          hmBody.innerHTML = sections.map(sec => {
+            const pct = Math.round((sec.total_dwell_sec / maxDwell) * 100);
             return `
               <tr>
-                <td><small style="color:var(--muted);">${dateStr}</small></td>
-                <td><b>${escapeHtml(s.city || 'Unknown')}</b></td>
-                <td>${escapeHtml(s.source_app || 'Meta Ad')} • ${escapeHtml(s.device_type || 'Mobile')}</td>
-                <td><b>${formatDuration(s.total_duration_sec)}</b></td>
-                <td>${s.is_converted ? '<span class="badge badge-synced">CONVERTED</span>' : '<span class="badge" style="background:#f1f3f5;color:var(--muted);">BROWSING</span>'}</td>
+                <td><b>${escapeHtml(sec.name || sec.section_id)}</b></td>
+                <td><b>${formatDuration(sec.total_dwell_sec)}</b></td>
+                <td>${(sec.session_views_count || sec.views_count || 0).toLocaleString()}</td>
+                <td>
+                  <div style="font-size:11px;color:var(--muted);font-weight:700;">${pct}% attention</div>
+                  <div class="bar-track"><div class="bar-fill" style="width:${pct}%;"></div></div>
+                </td>
               </tr>
             `;
           }).join('');
-        } else {
-          webBody.innerHTML = '<tr><td colspan="5" style="text-align:center;padding:16px;color:var(--muted);">No Meta website visitors recorded yet.</td></tr>';
         }
       }
 
-      if (!metaListLoaded) {
-        loadMetaCampaignsDropdown();
+      // Top Cities
+      const citiesList = document.getElementById('visCitiesList');
+      if (citiesList) {
+        const cities = s.topCities || [];
+        if (cities.length === 0) {
+          citiesList.innerHTML = '<p style="color:var(--muted);font-size:12px;padding:8px 0;">No visitor cities recorded in this period yet.</p>';
+        } else {
+          citiesList.innerHTML = cities.map(c => `
+            <div class="item-row">
+              <span class="name">📍 <b>${escapeHtml(c.city || 'Unknown')}</b>${c.region ? ', <small style="color:var(--muted);">' + escapeHtml(c.region) + '</small>' : ''}</span>
+              <span class="count-badge">${(c.visitor_count || c.count || 0).toLocaleString()}</span>
+            </div>
+          `).join('');
+        }
       }
 
+      // Load Live Sessions
+      loadVisitorSessionsFeed();
+
     } catch (err) {
-      console.error('[loadMetaAttribution error]:', err);
+      console.error('[loadVisitorActivity error]:', err);
+    }
+  }
+
+  async function loadVisitorSessionsFeed() {
+    try {
+      const res = await fetch('/api/admin/tracking/sessions?limit=25');
+      if (res.status === 401) return;
+      const data = await res.json();
+      const sessions = data.sessions || [];
+
+      const badge = document.getElementById('visSessionsCountBadge');
+      if (badge) badge.textContent = `${data.total || sessions.length} Sessions Recorded`;
+
+      const tbody = document.getElementById('visLiveSessionsBody');
+      if (tbody) {
+        if (sessions.length === 0) {
+          tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:20px;color:var(--muted);">No visitor sessions recorded yet.</td></tr>';
+        } else {
+          tbody.innerHTML = sessions.map(s => {
+            const dateStr = new Date(s.created_at).toLocaleString('en-IN', { dateStyle: 'short', timeStyle: 'short' });
+            const loc = s.city && s.city !== 'Unknown City' ? `${escapeHtml(s.city)}${s.region ? ', ' + escapeHtml(s.region) : ''}` : 'In-Transit';
+            const channel = s.source_app || s.channel || 'Direct';
+            const device = `${escapeHtml(s.device_type || 'Mobile')} (${escapeHtml(s.browser || 'Web')})`;
+            const outcome = s.is_converted || s.lead_id 
+              ? '<span class="badge badge-synced">APPLIED</span>' 
+              : '<span class="badge" style="background:#f1f3f5;color:var(--muted);">BROWSING</span>';
+
+            return `
+              <tr>
+                <td><small style="color:var(--muted);">${dateStr}</small></td>
+                <td><b>${escapeHtml(s.visitor_id ? s.visitor_id.substring(0, 14) + '...' : s.session_id.substring(0, 10))}</b><br><small style="color:var(--muted);">📍 ${loc}</small></td>
+                <td><span class="badge" style="background:rgba(23,105,170,0.08);color:var(--blue);font-weight:700;">${escapeHtml(channel)}</span></td>
+                <td>${device}</td>
+                <td><b>${formatDuration(s.total_duration_sec)}</b></td>
+                <td><b>${s.max_scroll_depth_pct || 0}%</b></td>
+                <td>${outcome}</td>
+              </tr>
+            `;
+          }).join('');
+        }
+      }
+    } catch (err) {
+      console.error('[loadVisitorSessionsFeed error]:', err);
+    }
+  }
+
+  // -------------------------------------------------------------
+  // TAB 4: META ADS INTELLIGENCE
+  // -------------------------------------------------------------
+  let metaListLoaded = false;
+
+  async function loadMetaAttribution() {
+    if (!metaListLoaded) {
+      loadMetaCampaignsDropdown();
     }
   }
 
@@ -1804,7 +1926,7 @@ tr:hover td {
           `).join('');
         metaListLoaded = true;
 
-        const defaultCamp = data.campaigns.find(c => c.id === '120248039512450384' || c.name.toLowerCase().includes('grant'));
+        const defaultCamp = data.campaigns.find(c => c.id === '120248039512450384' || c.name.toLowerCase().includes('grant')) || data.campaigns[0];
         if (defaultCamp && !document.getElementById('metaCampaignIdInput').value) {
           select.value = defaultCamp.id;
           document.getElementById('metaCampaignIdInput').value = defaultCamp.id;
@@ -1842,7 +1964,15 @@ tr:hover td {
       if (document.getElementById('campResultName')) document.getElementById('campResultName').textContent = data.campaignName || cid;
       if (document.getElementById('campResultId')) document.getElementById('campResultId').textContent = data.campaignId;
       if (document.getElementById('campResultBadge')) document.getElementById('campResultBadge').textContent = data.status || 'ACTIVE';
-      if (document.getElementById('campResultObjective')) document.getElementById('campResultObjective').textContent = data.objective || 'OUTCOME_LEADS';
+
+      // Objective & Category Badge
+      const isLeadGen = data.campaignCategory === 'LEAD_GENERATION';
+      const objEl = document.getElementById('campResultObjective');
+      if (objEl) {
+        objEl.textContent = isLeadGen ? '🎯 LEAD GENERATION CAMPAIGN' : '🌐 WEBSITE VISITS CAMPAIGN';
+        objEl.style.background = isLeadGen ? 'rgba(46,125,50,0.12)' : 'rgba(23,105,170,0.12)';
+        objEl.style.color = isLeadGen ? 'var(--success)' : 'var(--blue)';
+      }
 
       const m = data.metaMetrics || {};
       if (document.getElementById('campMetricSpend')) document.getElementById('campMetricSpend').textContent = `₹${parseFloat(m.spend || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}`;
@@ -1852,6 +1982,48 @@ tr:hover td {
       if (document.getElementById('campMetricCpc')) document.getElementById('campMetricCpc').textContent = `₹${parseFloat(m.cpc || 0).toFixed(2)}`;
       if (document.getElementById('campMetricCtr')) document.getElementById('campMetricCtr').textContent = `${parseFloat(m.ctr || 0).toFixed(2)}%`;
 
+      // Dynamic Highlight Primary Goal Card:
+      const goalBox = document.getElementById('campGoalMetricBox');
+      if (goalBox) {
+        if (isLeadGen) {
+          goalBox.innerHTML = `
+            <div style="background:#e8f5e9;border:1px solid rgba(46,125,50,0.3);padding:14px 18px;border-radius:8px;margin-bottom:14px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;">
+              <div>
+                <span style="font-size:11px;font-weight:800;color:var(--success);text-transform:uppercase;letter-spacing:.04em;display:block;">Verified Meta Lead Acquisition Goal</span>
+                <b style="font-size:24px;color:#1b5e20;">${(m.metaLeadsCount || 0).toLocaleString()} Leads Acquired</b>
+                <span style="font-size:12px;color:var(--muted);display:block;margin-top:2px;">Submitted directly through Meta Instant Forms and synced with CRM.</span>
+              </div>
+              <div style="text-align:right;">
+                <span style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;display:block;">Cost Per Lead (CPL)</span>
+                <b style="font-size:20px;color:var(--navy);">${m.costPerLead ? '₹' + m.costPerLead : 'N/A'}</b>
+              </div>
+            </div>
+          `;
+        } else {
+          const lpa = data.landingPageAnalytics || {};
+          goalBox.innerHTML = `
+            <div style="background:#e3f2fd;border:1px solid rgba(23,105,170,0.3);padding:14px 18px;border-radius:8px;margin-bottom:14px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;">
+              <div>
+                <span style="font-size:11px;font-weight:800;color:var(--blue);text-transform:uppercase;letter-spacing:.04em;display:block;">Website Traffic &amp; On-Site Engagement Goal</span>
+                <b style="font-size:24px;color:var(--blue);">${(m.landingPageViews || m.clicks || 0).toLocaleString()} Landing Page Views</b>
+                <span style="font-size:12px;color:var(--muted);display:block;margin-top:2px;">Visitors navigated directly to event.mymentorcircle.com from ad clicks.</span>
+              </div>
+              <div style="display:flex;gap:20px;text-align:right;">
+                <div>
+                  <span style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;display:block;">Cost / View</span>
+                  <b style="font-size:18px;color:var(--navy);">${m.costPerLandingPageView ? '₹' + m.costPerLandingPageView : '₹' + (m.cpc || '0.00')}</b>
+                </div>
+                <div>
+                  <span style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;display:block;">On-Site Conversions</span>
+                  <b style="font-size:18px;color:var(--success);">${lpa.conversions || 0} (${lpa.conversionRate || '0.0'}%)</b>
+                </div>
+              </div>
+            </div>
+          `;
+        }
+      }
+
+      // Ads breakdown table
       const adsBody = document.getElementById('campAdsTableBody');
       const ads = data.ads || [];
       if (document.getElementById('campAdsCountBadge')) document.getElementById('campAdsCountBadge').textContent = `${ads.length} Ads`;

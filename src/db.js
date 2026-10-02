@@ -606,6 +606,10 @@ function resolveDateBounds({ period = '30d', days = null, startDate = null, endD
   const p = (period || '').toLowerCase();
   if (p === 'today' || days === 1) {
     since = new Date(new Date().setHours(0, 0, 0, 0)).toISOString();
+  } else if (p === 'yesterday') {
+    const todayMidnight = new Date(new Date().setHours(0, 0, 0, 0));
+    since = new Date(todayMidnight.getTime() - 86400000).toISOString();
+    until = new Date(todayMidnight.getTime() - 1).toISOString();
   } else if (p === '7d' || p === '7days' || days === 7) {
     since = new Date(Date.now() - 7 * 86400000).toISOString();
   } else if (p === '30d' || p === '30days' || days === 30) {

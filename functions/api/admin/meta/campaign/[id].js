@@ -127,12 +127,34 @@ export async function onRequestGet(context) {
       cities[city] = (cities[city] || 0) + 1;
     });
 
+    const actions = overallInsight?.actions || [];
+    const costPerActions = overallInsight?.cost_per_action_type || [];
+
+    const leadAction = actions.find(a => a.action_type === 'lead' || a.action_type === 'onsite_conversion.lead_grouped' || (typeof a.action_type === 'string' && a.action_type.includes('lead')));
+    const metaLeadsCount = leadAction ? parseInt(leadAction.value, 10) : 0;
+
+    const cplAction = costPerActions.find(a => a.action_type === 'lead' || a.action_type === 'onsite_conversion.lead_grouped' || (typeof a.action_type === 'string' && a.action_type.includes('lead')));
+    const costPerLead = cplAction ? parseFloat(cplAction.value).toFixed(2) : null;
+
+    const landingPageViewAction = actions.find(a => a.action_type === 'landing_page_view' || a.action_type === 'omni_landing_page_view');
+    const landingPageViews = landingPageViewAction ? parseInt(landingPageViewAction.value, 10) : 0;
+
+    const costPerLandingAction = costPerActions.find(a => a.action_type === 'landing_page_view' || a.action_type === 'omni_landing_page_view');
+    const costPerLandingPageView = costPerLandingAction ? parseFloat(costPerLandingAction.value).toFixed(2) : null;
+
+    const linkClickAction = actions.find(a => a.action_type === 'link_click');
+    const linkClicks = linkClickAction ? parseInt(linkClickAction.value, 10) : (overallInsight ? parseInt(overallInsight.clicks || 0, 10) : 0);
+
+    const isLeadGen = (campaignInfo.objective === 'OUTCOME_LEADS' || campaignInfo.objective === 'LEAD_GENERATION' || metaLeadsCount > 0);
+    const campaignCategory = isLeadGen ? 'LEAD_GENERATION' : 'WEBSITE_VISITS';
+
     return json({
       success: true,
       campaignId,
       campaignName: campaignInfo.name,
       status: campaignInfo.status,
       objective: campaignInfo.objective,
+      campaignCategory,
       startTime: campaignInfo.start_time,
       datePreset,
       metaMetrics: {
@@ -142,7 +164,12 @@ export async function onRequestGet(context) {
         reach: overallInsight ? parseInt(overallInsight.reach || 0, 10) : 0,
         cpc: overallInsight ? parseFloat(overallInsight.cpc || 0).toFixed(2) : '0.00',
         ctr: overallInsight ? parseFloat(overallInsight.ctr || 0).toFixed(2) : '0.00',
-        cpm: overallInsight ? parseFloat(overallInsight.cpm || 0).toFixed(2) : '0.00'
+        cpm: overallInsight ? parseFloat(overallInsight.cpm || 0).toFixed(2) : '0.00',
+        metaLeadsCount,
+        costPerLead,
+        landingPageViews,
+        costPerLandingPageView,
+        linkClicks
       },
       adsets,
       ads,
