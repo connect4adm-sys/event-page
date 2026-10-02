@@ -21,6 +21,7 @@ export async function onRequestGet(context) {
       source: p.get('source') || '',
       campaign: p.get('campaign') || '',
       city: p.get('city') || '',
+      period: p.get('period') || '',
       startDate: p.get('startDate') || '',
       endDate: p.get('endDate') || '',
       limit: parseInt(p.get('limit'), 10) || 20,

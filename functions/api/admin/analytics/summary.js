@@ -9,10 +9,13 @@ export async function onRequestGet(context) {
   }
 
   const url = new URL(request.url);
-  const days = parseInt(url.searchParams.get('days'), 10) || 30;
+  const period = url.searchParams.get('period') || '';
+  const startDate = url.searchParams.get('startDate') || '';
+  const endDate = url.searchParams.get('endDate') || '';
+  const days = parseInt(url.searchParams.get('days'), 10) || null;
 
   try {
-    const summary = await getDashboardSummaryD1(env, days);
+    const summary = await getDashboardSummaryD1(env, { period, startDate, endDate, days });
     return json(summary, 200);
   } catch (err) {
     console.error('Analytics summary error:', err);

@@ -462,8 +462,11 @@ const server = http.createServer(async (req, res) => {
     // J2. Meta Marketing API: Single Campaign Intelligence & Ad/AdSet Breakdown
     if (pathname.startsWith('/api/admin/meta/campaign/') && method === 'GET') {
       const campaignId = pathname.replace('/api/admin/meta/campaign/', '').trim();
-      const datePreset = query.datePreset || 'maximum';
-      const data = await metaApi.getCampaignAnalytics(campaignId, datePreset);
+      const data = await metaApi.getCampaignAnalytics(campaignId, {
+        datePreset: query.datePreset || 'maximum',
+        startDate: query.startDate || null,
+        endDate: query.endDate || null
+      });
       return sendJson(res, 200, data);
     }
 

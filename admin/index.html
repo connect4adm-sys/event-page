@@ -643,10 +643,11 @@ tr:hover td {
       <div class="time-preset-group">
         <span style="font-size:12.5px;font-weight:700;color:var(--navy);margin-right:4px;">Time Horizon:</span>
         <button type="button" class="btn-time-preset is-active" data-period="today">Today</button>
+        <button type="button" class="btn-time-preset" data-period="yesterday">Yesterday</button>
         <button type="button" class="btn-time-preset" data-period="7d">Last 7 Days</button>
         <button type="button" class="btn-time-preset" data-period="30d">Last 30 Days</button>
-        <button type="button" class="btn-time-preset" data-period="6m">Last 6 Months</button>
-        <button type="button" class="btn-time-preset" data-period="custom">Custom Range</button>
+        <button type="button" class="btn-time-preset" data-period="custom">Custom Date Range</button>
+        <button type="button" class="btn-time-preset" data-period="all">All Time</button>
       </div>
 
       <div class="custom-date-box" id="overviewCustomRangeBox" style="display:none;">
@@ -797,6 +798,23 @@ tr:hover td {
       </div>
 
       <div class="filter-group">
+        <select class="filter-select" id="leadsPeriodFilter" style="font-weight:700;color:var(--navy);border-color:var(--line-strong);">
+          <option value="all" selected>All Time</option>
+          <option value="today">Today</option>
+          <option value="yesterday">Yesterday</option>
+          <option value="7d">Last 7 Days</option>
+          <option value="30d">Last 30 Days</option>
+          <option value="custom">Custom Date Range</option>
+        </select>
+
+        <div class="custom-date-box" id="leadsCustomRangeBox" style="display:none;align-items:center;gap:6px;">
+          <span style="font-size:12px;font-weight:600;color:var(--muted);">From:</span>
+          <input type="date" id="leadsCustomStart" class="form-date" />
+          <span style="font-size:12px;font-weight:600;color:var(--muted);">To:</span>
+          <input type="date" id="leadsCustomEnd" class="form-date" />
+          <button type="button" class="btn-action btn-primary" id="btnApplyLeadsCustom" style="padding:4px 10px;font-size:12px;">Apply</button>
+        </div>
+
         <select class="filter-select" id="leadsRoleFilter">
           <option value="">All Roles</option>
           <option value="Principal">Principal</option>
@@ -890,7 +908,8 @@ tr:hover td {
         <button type="button" class="btn-time-preset" data-vperiod="yesterday">Yesterday</button>
         <button type="button" class="btn-time-preset" data-vperiod="7d">Last 7 Days</button>
         <button type="button" class="btn-time-preset" data-vperiod="30d">Last 30 Days</button>
-        <button type="button" class="btn-time-preset" data-vperiod="custom">Custom Range</button>
+        <button type="button" class="btn-time-preset" data-vperiod="custom">Custom Date Range</button>
+        <button type="button" class="btn-time-preset" data-vperiod="all">All Time</button>
       </div>
 
       <div class="custom-date-box" id="visitorCustomRangeBox" style="display:none;">
@@ -1046,17 +1065,26 @@ tr:hover td {
           <input type="text" id="metaCampaignIdInput" class="filter-select" placeholder="e.g. 120248039512450384" style="width:100%;padding:8px 10px;" />
         </div>
 
-        <div style="min-width:140px;">
+        <div style="min-width:150px;">
           <label style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;display:block;margin-bottom:5px;">Date Range:</label>
-          <select id="metaDatePresetSelect" class="filter-select" style="width:100%;padding:8px 10px;">
-            <option value="maximum" selected>Maximum (All Time)</option>
-            <option value="last_30d">Last 30 Days</option>
-            <option value="last_7d">Last 7 Days</option>
+          <select id="metaDatePresetSelect" class="filter-select" style="width:100%;padding:8px 10px;font-weight:600;">
             <option value="today">Today</option>
+            <option value="yesterday">Yesterday</option>
+            <option value="last_7d">Last 7 Days</option>
+            <option value="last_30d">Last 30 Days</option>
+            <option value="custom">Custom Date Range</option>
+            <option value="maximum" selected>All Time</option>
           </select>
         </div>
 
-        <button type="button" id="btnTrackCampaign" class="btn-action btn-primary" style="padding:9px 18px;">
+        <div class="custom-date-box" id="metaCustomRangeBox" style="display:none;align-items:center;gap:6px;">
+          <span style="font-size:12px;font-weight:600;color:var(--muted);">From:</span>
+          <input type="date" id="metaCustomStart" class="form-date" />
+          <span style="font-size:12px;font-weight:600;color:var(--muted);">To:</span>
+          <input type="date" id="metaCustomEnd" class="form-date" />
+        </div>
+
+        <button type="button" id="btnTrackCampaign" class="btn-action btn-primary" style="padding:9px 18px;align-self:flex-end;">
           <span>Track Campaign</span>
         </button>
       </div>
@@ -1481,9 +1509,10 @@ tr:hover td {
         customEndDate = '';
         if (activeRangeText) {
           if (period === 'today') activeRangeText.textContent = 'Showing: Today';
+          else if (period === 'yesterday') activeRangeText.textContent = 'Showing: Yesterday';
           else if (period === '7d') activeRangeText.textContent = 'Showing: Last 7 Days';
           else if (period === '30d') activeRangeText.textContent = 'Showing: Last 30 Days';
-          else if (period === '6m') activeRangeText.textContent = 'Showing: Last 6 Months';
+          else if (period === 'all') activeRangeText.textContent = 'Showing: All Time';
         }
         loadOverview();
       }
@@ -1520,6 +1549,13 @@ tr:hover td {
     const status = document.getElementById('leadsStatusFilter')?.value || '';
     const gsheetStatus = document.getElementById('leadsSheetFilter')?.value || '';
     const crmStatus = document.getElementById('leadsCrmFilter')?.value || '';
+    const period = document.getElementById('leadsPeriodFilter')?.value || 'all';
+    let startDate = '';
+    let endDate = '';
+    if (period === 'custom') {
+      startDate = document.getElementById('leadsCustomStart')?.value || '';
+      endDate = document.getElementById('leadsCustomEnd')?.value || '';
+    }
 
     const params = new URLSearchParams({
       search,
@@ -1530,6 +1566,9 @@ tr:hover td {
       limit: LEADS_LIMIT,
       offset: leadsOffset
     });
+    if (period && period !== 'all') params.append('period', period);
+    if (startDate) params.append('startDate', startDate);
+    if (endDate) params.append('endDate', endDate);
 
     try {
       const res = await fetch(`/api/admin/leads?${params}`);
@@ -1633,8 +1672,18 @@ tr:hover td {
     const status = document.getElementById('leadsStatusFilter')?.value || '';
     const gsheetStatus = document.getElementById('leadsSheetFilter')?.value || '';
     const crmStatus = document.getElementById('leadsCrmFilter')?.value || '';
+    const period = document.getElementById('leadsPeriodFilter')?.value || 'all';
+    let startDate = '';
+    let endDate = '';
+    if (period === 'custom') {
+      startDate = document.getElementById('leadsCustomStart')?.value || '';
+      endDate = document.getElementById('leadsCustomEnd')?.value || '';
+    }
 
     const params = new URLSearchParams({ search, role, status, gsheetStatus, crmStatus });
+    if (period && period !== 'all') params.append('period', period);
+    if (startDate) params.append('startDate', startDate);
+    if (endDate) params.append('endDate', endDate);
     window.location.href = `/api/admin/leads/export.csv?${params.toString()}`;
   });
 
@@ -1743,6 +1792,23 @@ tr:hover td {
   document.getElementById('leadsStatusFilter')?.addEventListener('change', () => { leadsOffset = 0; loadLeads(); });
   document.getElementById('leadsSheetFilter')?.addEventListener('change', () => { leadsOffset = 0; loadLeads(); });
   document.getElementById('leadsCrmFilter')?.addEventListener('change', () => { leadsOffset = 0; loadLeads(); });
+  document.getElementById('leadsPeriodFilter')?.addEventListener('change', function() {
+    const customBox = document.getElementById('leadsCustomRangeBox');
+    if (this.value === 'custom') {
+      if (customBox) customBox.style.display = 'flex';
+    } else {
+      if (customBox) customBox.style.display = 'none';
+      leadsOffset = 0;
+      loadLeads();
+    }
+  });
+  document.getElementById('btnApplyLeadsCustom')?.addEventListener('click', () => {
+    const s = document.getElementById('leadsCustomStart')?.value || '';
+    const e = document.getElementById('leadsCustomEnd')?.value || '';
+    if (!s && !e) { alert('Please select at least a start or end date.'); return; }
+    leadsOffset = 0;
+    loadLeads();
+  });
   document.getElementById('leadsPrevBtn')?.addEventListener('click', () => {
     if (leadsOffset >= LEADS_LIMIT) { leadsOffset -= LEADS_LIMIT; loadLeads(); }
   });
@@ -1846,16 +1912,23 @@ tr:hover td {
       }
 
       // Load Live Sessions
-      loadVisitorSessionsFeed();
+      loadVisitorSessionsFeed(period, startDate, endDate);
 
     } catch (err) {
       console.error('[loadVisitorActivity error]:', err);
     }
   }
 
-  async function loadVisitorSessionsFeed() {
+  async function loadVisitorSessionsFeed(period = currentVisitorPeriod, startDate = '', endDate = '') {
     try {
-      const res = await fetch('/api/admin/tracking/sessions?limit=25');
+      let url = `/api/admin/tracking/sessions?limit=25&period=${encodeURIComponent(period)}`;
+      if (period === 'custom') {
+        const s = startDate || document.getElementById('visitorStartDateInput')?.value || '';
+        const e = endDate || document.getElementById('visitorEndDateInput')?.value || '';
+        if (s) url += `&startDate=${encodeURIComponent(s)}`;
+        if (e) url += `&endDate=${encodeURIComponent(e)}`;
+      }
+      const res = await fetch(url);
       if (res.status === 401) return;
       const data = await res.json();
       const sessions = data.sessions || [];
@@ -1935,7 +2008,7 @@ tr:hover td {
     }
   }
 
-  async function trackSingleCampaign(campaignId, datePreset = 'maximum') {
+  async function trackSingleCampaign(campaignId, datePreset = null) {
     const cid = (campaignId || document.getElementById('metaCampaignIdInput')?.value || document.getElementById('metaCampaignSelect')?.value || '').trim();
     if (!cid) {
       alert('Please enter or select a Campaign ID to track.');
@@ -1943,11 +2016,26 @@ tr:hover td {
     }
 
     const preset = datePreset || document.getElementById('metaDatePresetSelect')?.value || 'maximum';
+    let s = '';
+    let e = '';
+    if (preset === 'custom') {
+      s = document.getElementById('metaCustomStart')?.value || '';
+      e = document.getElementById('metaCustomEnd')?.value || '';
+      if (!s || !e) {
+        alert('Please select both From and To dates for the custom date range.');
+        return;
+      }
+    }
+
     const btn = document.getElementById('btnTrackCampaign');
     if (btn) { btn.disabled = true; btn.textContent = 'Tracking...'; }
 
     try {
-      const res = await fetch(`/api/admin/meta/campaign/${encodeURIComponent(cid)}?datePreset=${encodeURIComponent(preset)}`);
+      let url = `/api/admin/meta/campaign/${encodeURIComponent(cid)}?datePreset=${encodeURIComponent(preset)}`;
+      if (preset === 'custom') {
+        url += `&startDate=${encodeURIComponent(s)}&endDate=${encodeURIComponent(e)}`;
+      }
+      const res = await fetch(url);
       const data = await res.json();
 
       if (!data.success) {
@@ -2054,6 +2142,17 @@ tr:hover td {
     if (this.value) {
       document.getElementById('metaCampaignIdInput').value = this.value;
       trackSingleCampaign(this.value);
+    }
+  });
+
+  document.getElementById('metaDatePresetSelect')?.addEventListener('change', function() {
+    const customBox = document.getElementById('metaCustomRangeBox');
+    if (this.value === 'custom') {
+      if (customBox) customBox.style.display = 'flex';
+    } else {
+      if (customBox) customBox.style.display = 'none';
+      const cid = (document.getElementById('metaCampaignIdInput')?.value || document.getElementById('metaCampaignSelect')?.value || '').trim();
+      if (cid) trackSingleCampaign(cid, this.value);
     }
   });
 

@@ -15,6 +15,23 @@ export async function onRequestGet(context) {
 
   const urlObj = new URL(request.url);
   const datePreset = urlObj.searchParams.get('datePreset') || 'maximum';
+  const startDate = urlObj.searchParams.get('startDate');
+  const endDate = urlObj.searchParams.get('endDate');
+
+  let dateParam = 'date_preset=maximum';
+  let datePresetLabel = 'maximum';
+
+  if (startDate && endDate) {
+    dateParam = `time_range=${encodeURIComponent(JSON.stringify({ since: startDate, until: endDate }))}`;
+    datePresetLabel = 'custom';
+  } else {
+    const p = (datePreset || '').toLowerCase();
+    if (p === 'today') { dateParam = 'date_preset=today'; datePresetLabel = 'today'; }
+    else if (p === 'yesterday') { dateParam = 'date_preset=yesterday'; datePresetLabel = 'yesterday'; }
+    else if (p === 'last_7d' || p === '7d') { dateParam = 'date_preset=last_7d'; datePresetLabel = 'last_7d'; }
+    else if (p === 'last_30d' || p === '30d') { dateParam = 'date_preset=last_30d'; datePresetLabel = 'last_30d'; }
+    else { dateParam = 'date_preset=maximum'; datePresetLabel = 'maximum'; }
+  }
 
   const token = env.META_PAGE_ACCESS_TOKEN;
   if (!token) {
@@ -23,9 +40,9 @@ export async function onRequestGet(context) {
 
   try {
     const campaignInfoUrl = `https://graph.facebook.com/v19.0/${encodeURIComponent(campaignId)}?fields=id,name,status,objective,start_time&access_token=${encodeURIComponent(token)}`;
-    const campaignInsightsUrl = `https://graph.facebook.com/v19.0/${encodeURIComponent(campaignId)}/insights?fields=spend,impressions,clicks,cpc,ctr,cpm,reach,actions,cost_per_action_type&date_preset=${encodeURIComponent(datePreset)}&access_token=${encodeURIComponent(token)}`;
-    const adsetInsightsUrl = `https://graph.facebook.com/v19.0/${encodeURIComponent(campaignId)}/insights?level=adset&fields=adset_id,adset_name,spend,impressions,clicks,cpc,ctr,reach&date_preset=${encodeURIComponent(datePreset)}&access_token=${encodeURIComponent(token)}`;
-    const adInsightsUrl = `https://graph.facebook.com/v19.0/${encodeURIComponent(campaignId)}/insights?level=ad&fields=ad_id,ad_name,adset_id,adset_name,spend,impressions,clicks,cpc,ctr,reach&date_preset=${encodeURIComponent(datePreset)}&access_token=${encodeURIComponent(token)}`;
+    const campaignInsightsUrl = `https://graph.facebook.com/v19.0/${encodeURIComponent(campaignId)}/insights?fields=spend,impressions,clicks,cpc,ctr,cpm,reach,actions,cost_per_action_type&${dateParam}&access_token=${encodeURIComponent(token)}`;
+    const adsetInsightsUrl = `https://graph.facebook.com/v19.0/${encodeURIComponent(campaignId)}/insights?level=adset&fields=adset_id,adset_name,spend,impressions,clicks,cpc,ctr,reach&${dateParam}&access_token=${encodeURIComponent(token)}`;
+    const adInsightsUrl = `https://graph.facebook.com/v19.0/${encodeURIComponent(campaignId)}/insights?level=ad&fields=ad_id,ad_name,adset_id,adset_name,spend,impressions,clicks,cpc,ctr,reach&${dateParam}&access_token=${encodeURIComponent(token)}`;
 
     const [campaignRes, insightsRes, adsetRes, adRes] = await Promise.all([
       fetch(campaignInfoUrl).then(r => r.json()),
@@ -65,7 +82,28 @@ export async function onRequestGet(context) {
       reach: parseInt(ad.reach || 0, 10)
     }));
 
-    // Query D1 for visitor sessions and leads matching this campaign
+    // Compute date bounds for local database filtering
+    let since = '2020-01-01T00:00:00.000Z';
+    let until = new Date().toISOString();
+    if (startDate && endDate) {
+      since = startDate.includes('T') ? startDate : `${startDate}T00:00:00.000Z`;
+      until = endDate.includes('T') ? endDate : `${endDate}T23:59:59.999Z`;
+    } else {
+      const p = (datePreset || '').toLowerCase();
+      if (p === 'today') {
+        since = new Date(new Date().setHours(0, 0, 0, 0)).toISOString();
+      } else if (p === 'yesterday') {
+        const todayMidnight = new Date(new Date().setHours(0, 0, 0, 0));
+        since = new Date(todayMidnight.getTime() - 86400000).toISOString();
+        until = new Date(todayMidnight.getTime() - 1).toISOString();
+      } else if (p === 'last_7d' || p === '7d') {
+        since = new Date(Date.now() - 7 * 86400000).toISOString();
+      } else if (p === 'last_30d' || p === '30d') {
+        since = new Date(Date.now() - 30 * 86400000).toISOString();
+      }
+    }
+
+    // Query D1 for visitor sessions and leads matching this campaign within time window
     let localSessions = [];
     let localLeads = [];
 
@@ -77,12 +115,11 @@ export async function onRequestGet(context) {
             device_type, browser, total_duration_sec, max_scroll_depth_pct,
             sections_viewed, is_converted, lead_id, created_at
           FROM visitor_sessions
-          WHERE utm_campaign LIKE ? 
-             OR landing_url LIKE ? 
-             OR (utm_source = 'meta' AND ? = '120248039512450384')
+          WHERE (utm_campaign LIKE ? OR landing_url LIKE ? OR (utm_source = 'meta' AND ? = '120248039512450384'))
+            AND created_at >= ? AND created_at <= ?
           ORDER BY created_at DESC
           LIMIT 100
-        `).bind(`%${campaignId}%`, `%${campaignId}%`, campaignId).all();
+        `).bind(`%${campaignId}%`, `%${campaignId}%`, campaignId, since, until).all();
         localSessions = sessRes.results || [];
       } catch (e) {
         console.warn('D1 sessions query error (table may be empty):', e.message);
@@ -94,11 +131,11 @@ export async function onRequestGet(context) {
             lead_id, full_name, phone, school_name, school_role, school_city_district,
             google_sheet_sync_status, crm_sync_status, created_at
           FROM leads
-          WHERE utm_campaign LIKE ? 
-             OR fbclid IS NOT NULL
+          WHERE (utm_campaign LIKE ? OR fbclid IS NOT NULL)
+            AND created_at >= ? AND created_at <= ?
           ORDER BY created_at DESC
           LIMIT 50
-        `).bind(`%${campaignId}%`).all();
+        `).bind(`%${campaignId}%`, since, until).all();
         localLeads = leadsRes.results || [];
       } catch (e) {
         console.warn('D1 leads query error:', e.message);
@@ -156,7 +193,7 @@ export async function onRequestGet(context) {
       objective: campaignInfo.objective,
       campaignCategory,
       startTime: campaignInfo.start_time,
-      datePreset,
+      datePreset: datePresetLabel,
       metaMetrics: {
         spend: overallInsight ? parseFloat(overallInsight.spend || 0).toFixed(2) : '0.00',
         impressions: overallInsight ? parseInt(overallInsight.impressions || 0, 10) : 0,

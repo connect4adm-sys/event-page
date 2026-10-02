@@ -48,6 +48,8 @@ function resolveDateBounds({ period = '30d', startDate = null, endDate = null } 
     since = new Date(Date.now() - 7 * 86400000).toISOString();
   } else if (p === '30d' || p === '30days') {
     since = new Date(Date.now() - 30 * 86400000).toISOString();
+  } else if (p === 'all' || p === 'all_time' || p === 'alltime' || p === 'maximum') {
+    since = '2020-01-01T00:00:00.000Z';
   } else if (p === '6m' || p === '6months') {
     since = new Date(Date.now() - 180 * 86400000).toISOString();
   } else {

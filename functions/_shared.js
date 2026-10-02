@@ -289,6 +289,46 @@ export function classifyLeadSource(lead) {
   return utmSource ? `Campaign (${lead.utm_source})` : 'Unknown / Untracked';
 }
 
+export function resolveDateBounds({ period = '30d', days = null, startDate = null, endDate = null } = {}) {
+  const now = new Date();
+  let since = null;
+  let until = now.toISOString();
+
+  if (startDate || endDate) {
+    if (startDate) {
+      since = startDate.includes('T') ? startDate : `${startDate}T00:00:00.000Z`;
+    }
+    if (endDate) {
+      until = endDate.includes('T') ? endDate : `${endDate}T23:59:59.999Z`;
+    }
+    if (!since) {
+      since = new Date(Date.now() - 30 * 86400000).toISOString();
+    }
+    return { since, until };
+  }
+
+  const p = (period || '').toLowerCase();
+  if (p === 'today' || days === 1) {
+    since = new Date(new Date().setHours(0, 0, 0, 0)).toISOString();
+  } else if (p === 'yesterday') {
+    const todayMidnight = new Date(new Date().setHours(0, 0, 0, 0));
+    since = new Date(todayMidnight.getTime() - 86400000).toISOString();
+    until = new Date(todayMidnight.getTime() - 1).toISOString();
+  } else if (p === '7d' || p === '7days' || days === 7) {
+    since = new Date(Date.now() - 7 * 86400000).toISOString();
+  } else if (p === '30d' || p === '30days' || days === 30) {
+    since = new Date(Date.now() - 30 * 86400000).toISOString();
+  } else if (p === 'all' || p === 'all_time' || p === 'alltime' || p === 'maximum') {
+    since = '2020-01-01T00:00:00.000Z';
+  } else if (days && Number.isFinite(days)) {
+    since = new Date(Date.now() - days * 86400000).toISOString();
+  } else {
+    since = new Date(Date.now() - 30 * 86400000).toISOString();
+  }
+
+  return { since, until };
+}
+
 export async function listLeadsD1(env, {
   search = '',
   role = '',
@@ -298,6 +338,7 @@ export async function listLeadsD1(env, {
   source = '',
   campaign = '',
   city = '',
+  period = '',
   startDate = '',
   endDate = '',
   limit = 20,
@@ -351,14 +392,19 @@ export async function listLeadsD1(env, {
     params.push(`%${city}%`);
   }
 
-  if (startDate) {
-    whereClauses.push('created_at >= ?');
-    params.push(startDate);
-  }
-
-  if (endDate) {
-    whereClauses.push('created_at <= ?');
-    params.push(endDate);
+  if (period || (startDate && endDate)) {
+    const { since, until } = resolveDateBounds({ period, startDate, endDate });
+    whereClauses.push('created_at >= ? AND created_at <= ?');
+    params.push(since, until);
+  } else {
+    if (startDate) {
+      whereClauses.push('created_at >= ?');
+      params.push(startDate.includes('T') ? startDate : `${startDate}T00:00:00.000Z`);
+    }
+    if (endDate) {
+      whereClauses.push('created_at <= ?');
+      params.push(endDate.includes('T') ? endDate : `${endDate}T23:59:59.999Z`);
+    }
   }
 
   const whereSql = whereClauses.length > 0 ? `WHERE ${whereClauses.join(' AND ')}` : '';
@@ -389,44 +435,45 @@ export async function listLeadsD1(env, {
   };
 }
 
-export async function getDashboardSummaryD1(env, dateRangeDays = 30) {
-  const now = new Date();
-  const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate()).toISOString();
-  const rangeStart = new Date(Date.now() - dateRangeDays * 24 * 60 * 60 * 1000).toISOString();
-  const trendStart = new Date(Date.now() - 14 * 24 * 60 * 60 * 1000).toISOString();
+export async function getDashboardSummaryD1(env, options = {}) {
+  const opts = typeof options === 'number' ? { days: options } : (options || {});
+  const { since, until } = resolveDateBounds(opts);
 
-  // Optimized single-round-trip batch execution
+  const now = new Date();
+  const todayStart = new Date(new Date().setHours(0, 0, 0, 0)).toISOString();
+
+  // Optimized batch queries for metrics in selected range
   const stmts = [
-    // 0: Metrics summary in a single indexed scan
+    // 0: Metrics summary
     env.DB.prepare(`
       SELECT 
         COUNT(*) as total,
         COALESCE(SUM(CASE WHEN created_at >= ? THEN 1 ELSE 0 END), 0) as today,
-        COALESCE(SUM(CASE WHEN created_at >= ? THEN 1 ELSE 0 END), 0) as in_range,
+        COALESCE(SUM(CASE WHEN created_at >= ? AND created_at <= ? THEN 1 ELSE 0 END), 0) as in_range,
         COALESCE(SUM(CASE WHEN is_duplicate_suspect = 1 THEN 1 ELSE 0 END), 0) as duplicates
       FROM leads
-    `).bind(todayStart, rangeStart),
+    `).bind(todayStart, since, until),
 
     // 1: Role Breakdown
-    env.DB.prepare('SELECT school_role, COUNT(*) as count FROM leads GROUP BY school_role ORDER BY count DESC'),
+    env.DB.prepare('SELECT school_role, COUNT(*) as count FROM leads WHERE created_at >= ? AND created_at <= ? GROUP BY school_role ORDER BY count DESC').bind(since, until),
 
     // 2: Status Breakdown
-    env.DB.prepare('SELECT lead_status, COUNT(*) as count FROM leads GROUP BY lead_status ORDER BY count DESC'),
+    env.DB.prepare('SELECT lead_status, COUNT(*) as count FROM leads WHERE created_at >= ? AND created_at <= ? GROUP BY lead_status ORDER BY count DESC').bind(since, until),
 
-    // 3: Source Breakdown (direct SQL grouping instead of full table scan)
-    env.DB.prepare(`SELECT COALESCE(NULLIF(utm_source, ''), 'Direct') as source, COUNT(*) as count FROM leads GROUP BY source ORDER BY count DESC`),
+    // 3: Source Breakdown
+    env.DB.prepare(`SELECT COALESCE(NULLIF(utm_source, ''), 'Direct') as source, COUNT(*) as count FROM leads WHERE created_at >= ? AND created_at <= ? GROUP BY source ORDER BY count DESC`).bind(since, until),
 
-    // 4: Campaign Breakdown (single quotes for SQL string literals)
-    env.DB.prepare(`SELECT COALESCE(NULLIF(utm_campaign, ''), 'No Campaign Specified') as campaign, COUNT(*) as count FROM leads GROUP BY campaign ORDER BY count DESC LIMIT 10`),
+    // 4: Campaign Breakdown
+    env.DB.prepare(`SELECT COALESCE(NULLIF(utm_campaign, ''), 'No Campaign Specified') as campaign, COUNT(*) as count FROM leads WHERE created_at >= ? AND created_at <= ? GROUP BY campaign ORDER BY count DESC LIMIT 10`).bind(since, until),
 
     // 5: Submission Trend
-    env.DB.prepare('SELECT SUBSTR(created_at, 1, 10) as day, COUNT(*) as count FROM leads WHERE created_at >= ? GROUP BY day ORDER BY day ASC').bind(trendStart),
+    env.DB.prepare('SELECT SUBSTR(created_at, 1, 10) as day, COUNT(*) as count FROM leads WHERE created_at >= ? AND created_at <= ? GROUP BY day ORDER BY day ASC').bind(since, until),
 
     // 6: Google Sheet Sync Statuses
-    env.DB.prepare('SELECT google_sheet_sync_status as status, COUNT(*) as count FROM leads GROUP BY google_sheet_sync_status'),
+    env.DB.prepare('SELECT google_sheet_sync_status as status, COUNT(*) as count FROM leads WHERE created_at >= ? AND created_at <= ? GROUP BY google_sheet_sync_status').bind(since, until),
 
     // 7: CRM Sync Statuses
-    env.DB.prepare('SELECT crm_sync_status as status, COUNT(*) as count FROM leads GROUP BY crm_sync_status')
+    env.DB.prepare('SELECT crm_sync_status as status, COUNT(*) as count FROM leads WHERE created_at >= ? AND created_at <= ? GROUP BY crm_sync_status').bind(since, until)
   ];
 
   let results;
@@ -445,12 +492,55 @@ export async function getDashboardSummaryD1(env, dateRangeDays = 30) {
   const gsheetRows = results[6]?.results || results[6] || [];
   const crmRows = results[7]?.results || results[7] || [];
 
+  // Query visitor_sessions if available in D1
+  let visitorStats = { totalVisits: 0, totalVisitors: 0, avgDurationSec: 0, avgScrollPct: 0, conversions: 0, conversionRate: '0.0' };
+  let topCities = [];
+
+  try {
+    const vKpi = await env.DB.prepare(`
+      SELECT 
+        COUNT(DISTINCT visitor_id) as total_visitors,
+        COUNT(*) as total_sessions,
+        COALESCE(AVG(total_duration_sec), 0) as avg_duration,
+        COALESCE(AVG(max_scroll_depth_pct), 0) as avg_scroll,
+        COALESCE(SUM(CASE WHEN is_converted = 1 OR lead_id IS NOT NULL THEN 1 ELSE 0 END), 0) as conversions
+      FROM visitor_sessions
+      WHERE created_at >= ? AND created_at <= ?
+    `).bind(since, until).first();
+
+    if (vKpi) {
+      const visits = vKpi.total_sessions || 0;
+      const convs = vKpi.conversions || 0;
+      visitorStats = {
+        totalVisits: visits,
+        totalVisitors: vKpi.total_visitors || 0,
+        avgDurationSec: Math.round(vKpi.avg_duration || 0),
+        avgScrollPct: Math.round(vKpi.avg_scroll || 0),
+        conversions: convs,
+        conversionRate: visits > 0 ? ((convs / visits) * 100).toFixed(1) : '0.0'
+      };
+    }
+
+    const cityRows = await env.DB.prepare(`
+      SELECT city, region, COUNT(*) as count
+      FROM visitor_sessions
+      WHERE created_at >= ? AND created_at <= ? AND city IS NOT NULL AND city != '' AND city != 'Unknown City'
+      GROUP BY city
+      ORDER BY count DESC
+      LIMIT 10
+    `).bind(since, until).all();
+    topCities = cityRows.results || [];
+  } catch (err) {
+    // Visitor table may not be populated yet
+  }
+
   return {
     totalLeads: countsRow.total || 0,
     leadsToday: countsRow.today || 0,
     leadsInRange: countsRow.in_range || 0,
     duplicateSuspects: countsRow.duplicates || 0,
-    dateRangeDays,
+    visitors: visitorStats,
+    topCities,
     roleBreakdown: roleRows,
     statusBreakdown: statusRows,
     sourceBreakdown: sourceRows,

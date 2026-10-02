@@ -268,19 +268,59 @@ async function runTests() {
     const sectionsVisited = sessionDetailRes.json.session.sections_visited || [];
     assert(sectionsVisited.some(s => (s.section_id || s) === 'grant'), 'Recorded visited sections correctly preserved');
 
-    // Time Horizon Tests: Today, 7d, 30d, 6m, and Custom Range
-    const todaySummary = await makeRequest('GET', '/api/admin/tracking/summary?period=today', null, authHeaders);
-    assert(todaySummary.status === 200, 'GET /api/admin/tracking/summary?period=today returns 200');
-    assert(todaySummary.json && todaySummary.json.summary.sinceDate, 'Today summary returns resolved sinceDate');
+    // Time Horizon Tests: Today, Yesterday, 7d, 30d, All Time, and Custom Range across all tabs
+    console.log('\n--- 8B. Comprehensive 6-Filter Horizon Suite (Today, Yesterday, 7d, 30d, All Time, Custom) ---');
+    const horizonPresets = [
+      { p: 'today', name: 'Today' },
+      { p: 'yesterday', name: 'Yesterday' },
+      { p: '7d', name: 'Last 7 Days' },
+      { p: '30d', name: 'Last 30 Days' },
+      { p: 'all', name: 'All Time' }
+    ];
 
-    const sevenDaySummary = await makeRequest('GET', '/api/admin/tracking/summary?period=7d', null, authHeaders);
-    assert(sevenDaySummary.status === 200, 'GET /api/admin/tracking/summary?period=7d returns 200');
+    for (const h of horizonPresets) {
+      // 1. Overview Analytics
+      const oRes = await makeRequest('GET', `/api/admin/analytics/summary?period=${h.p}`, null, authHeaders);
+      assert(oRes.status === 200, `GET /api/admin/analytics/summary?period=${h.p} (${h.name}) returns 200`);
+      assert(oRes.json && oRes.json.totalLeads !== undefined, `Overview (${h.name}) returns total leads`);
 
-    const sixMonthSummary = await makeRequest('GET', '/api/admin/tracking/summary?period=6m', null, authHeaders);
-    assert(sixMonthSummary.status === 200, 'GET /api/admin/tracking/summary?period=6m returns 200');
+      // 2. Leads Management
+      const lRes = await makeRequest('GET', `/api/admin/leads?period=${h.p}`, null, authHeaders);
+      assert(lRes.status === 200, `GET /api/admin/leads?period=${h.p} (${h.name}) returns 200`);
+      assert(lRes.json && Array.isArray(lRes.json.leads), `Leads list (${h.name}) returns array of leads`);
 
-    const customSummary = await makeRequest('GET', '/api/admin/tracking/summary?period=custom&startDate=2026-01-01&endDate=2026-12-31', null, authHeaders);
-    assert(customSummary.status === 200, 'GET /api/admin/tracking/summary?period=custom returns 200');
+      // 3. Visitor Tracking Summary
+      const tRes = await makeRequest('GET', `/api/admin/tracking/summary?period=${h.p}`, null, authHeaders);
+      assert(tRes.status === 200, `GET /api/admin/tracking/summary?period=${h.p} (${h.name}) returns 200`);
+      assert(tRes.json && tRes.json.summary && tRes.json.summary.sinceDate, `Tracking summary (${h.name}) has resolved sinceDate`);
+
+      // 4. Visitor Tracking Sessions Feed
+      const sRes = await makeRequest('GET', `/api/admin/tracking/sessions?period=${h.p}`, null, authHeaders);
+      assert(sRes.status === 200, `GET /api/admin/tracking/sessions?period=${h.p} (${h.name}) returns 200`);
+      assert(sRes.json && Array.isArray(sRes.json.sessions), `Tracking sessions (${h.name}) returns sessions array`);
+    }
+
+    // Custom Date Range Test across all 4 endpoints
+    const customParams = 'period=custom&startDate=2026-09-01&endDate=2026-10-01';
+    const customOverview = await makeRequest('GET', `/api/admin/analytics/summary?${customParams}`, null, authHeaders);
+    assert(customOverview.status === 200, 'Custom Range: GET /api/admin/analytics/summary returns 200');
+
+    const customLeads = await makeRequest('GET', `/api/admin/leads?${customParams}`, null, authHeaders);
+    assert(customLeads.status === 200, 'Custom Range: GET /api/admin/leads returns 200');
+
+    const customTracking = await makeRequest('GET', `/api/admin/tracking/summary?${customParams}`, null, authHeaders);
+    assert(customTracking.status === 200, 'Custom Range: GET /api/admin/tracking/summary returns 200');
+
+    const customSessions = await makeRequest('GET', `/api/admin/tracking/sessions?${customParams}`, null, authHeaders);
+    assert(customSessions.status === 200, 'Custom Range: GET /api/admin/tracking/sessions returns 200');
+
+    // Meta Ads Intelligence API with Campaign Analytics
+    console.log('\n--- 8C. Meta Ads Intelligence Campaign Tracking ---');
+    const metaCampRes = await makeRequest('GET', '/api/admin/meta/campaign/120248039512450384?datePreset=maximum', null, authHeaders);
+    assert(metaCampRes.status === 200, 'GET /api/admin/meta/campaign/:id (maximum) returns 200');
+    assert(metaCampRes.json && metaCampRes.json.success === true, 'Meta campaign intelligence responds with success');
+    assert(metaCampRes.json.metaMetrics && metaCampRes.json.metaMetrics.landingPageViews > 0, 'Landing page views extracted from Meta API');
+    assert(metaCampRes.json.landingPageAnalytics && Array.isArray(metaCampRes.json.landingPageAnalytics.recentSessions), 'Local on-site sessions matched with campaign');
 
     // Test 9: Meta Lead Ads Webhook Ingestion
     console.log('\n--- 9. Meta Lead Ads Webhook Ingestion ---');
