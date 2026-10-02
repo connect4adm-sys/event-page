@@ -1098,50 +1098,46 @@ tr:hover td {
               <b id="campResultName" style="font-size:16px;color:var(--navy);">-</b>
               <span style="font-size:12px;color:var(--muted);margin-left:8px;">ID: <code id="campResultId">-</code></span>
             </div>
-            <span id="campResultObjective" style="font-size:11px;font-weight:700;color:var(--blue);background:rgba(23,105,170,0.08);padding:3px 8px;border-radius:4px;">OUTCOME_LEADS</span>
+            <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+              <span id="campResultObjective" style="font-size:11px;font-weight:700;padding:4px 10px;border-radius:4px;background:rgba(23,105,170,0.08);color:var(--blue);">-</span>
+              <button type="button" id="btnCopyExecSummary" class="btn-action" style="padding:5px 12px;font-size:11px;background:#f8fafc;border:1px solid var(--line);color:var(--navy);display:inline-flex;align-items:center;gap:5px;cursor:pointer;" title="Copy executive briefing for WhatsApp or Slack">
+                <span>📋 Copy Briefing</span>
+              </button>
+              <button type="button" id="btnExportCampCsv" class="btn-action" style="padding:5px 12px;font-size:11px;background:#f8fafc;border:1px solid var(--line);color:var(--navy);display:inline-flex;align-items:center;gap:5px;cursor:pointer;" title="Export ad breakdown to CSV">
+                <span>📥 Export CSV</span>
+              </button>
+              <a id="campAdsManagerLink" href="https://adsmanager.facebook.com" target="_blank" rel="noopener noreferrer" class="btn-action" style="padding:5px 12px;font-size:11px;background:rgba(24,119,242,0.08);border:1px solid rgba(24,119,242,0.25);color:#1877F2;text-decoration:none;display:inline-flex;align-items:center;gap:4px;cursor:pointer;">
+                <span>View in Ads Manager ↗</span>
+              </a>
+            </div>
           </div>
 
+          <!-- Executive Creative Insights Banner (Winner & Low Performer) -->
+          <div id="campExecInsightsBanner" style="display:none;margin-bottom:14px;"></div>
+
           <div id="campGoalMetricBox"></div>
-          <!-- Campaign Top Metrics -->
-          <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(130px, 1fr));gap:10px;">
-            <div style="background:var(--soft);padding:10px 12px;border-radius:6px;">
-              <span style="font-size:11px;color:var(--muted);text-transform:uppercase;font-weight:700;display:block;">Ad Spend</span>
-              <b id="campMetricSpend" style="font-size:17px;color:var(--navy);">₹0.00</b>
-            </div>
-            <div style="background:var(--soft);padding:10px 12px;border-radius:6px;">
-              <span style="font-size:11px;color:var(--muted);text-transform:uppercase;font-weight:700;display:block;">Impressions</span>
-              <b id="campMetricImpressions" style="font-size:17px;color:var(--navy);">0</b>
-            </div>
-            <div style="background:var(--soft);padding:10px 12px;border-radius:6px;">
-              <span style="font-size:11px;color:var(--muted);text-transform:uppercase;font-weight:700;display:block;">Reach</span>
-              <b id="campMetricReach" style="font-size:17px;color:var(--navy);">0</b>
-            </div>
-            <div style="background:var(--soft);padding:10px 12px;border-radius:6px;">
-              <span style="font-size:11px;color:var(--muted);text-transform:uppercase;font-weight:700;display:block;">Total Clicks</span>
-              <b id="campMetricClicks" style="font-size:17px;color:var(--blue);">0</b>
-            </div>
-            <div style="background:var(--soft);padding:10px 12px;border-radius:6px;">
-              <span style="font-size:11px;color:var(--muted);text-transform:uppercase;font-weight:700;display:block;">Average CPC</span>
-              <b id="campMetricCpc" style="font-size:17px;color:var(--navy);">₹0.00</b>
-            </div>
-            <div style="background:var(--soft);padding:10px 12px;border-radius:6px;">
-              <span style="font-size:11px;color:var(--muted);text-transform:uppercase;font-weight:700;display:block;">Click Rate (CTR)</span>
-              <b id="campMetricCtr" style="font-size:17px;color:var(--success);">0.00%</b>
-            </div>
+
+          <!-- Campaign Top Metrics (Dynamically structured by campaign type) -->
+          <div id="campTopMetricsGrid" style="display:grid;grid-template-columns:repeat(auto-fit, minmax(130px, 1fr));gap:10px;">
           </div>
         </div>
 
         <!-- Ads Performance Table -->
         <div style="background:#fff;border:1px solid var(--line);border-radius:8px;padding:16px;">
-          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
-            <h4 style="font-size:14px;font-weight:800;color:var(--navy);margin:0;">
-              Ads &amp; Creative Breakdown (e.g. AD 01, AD 02, AD 03)
-            </h4>
+          <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:10px;">
+            <div>
+              <h4 style="font-size:14px;font-weight:800;color:var(--navy);margin:0;">
+                Ads &amp; Creative Breakdown (e.g. AD 01, AD 02, AD 03)
+              </h4>
+              <p id="campAdsSubtext" style="font-size:12px;color:var(--muted);margin:3px 0 0 0;">
+                Real-time performance by ad creative for this campaign.
+              </p>
+            </div>
             <span id="campAdsCountBadge" class="badge" style="background:var(--soft);color:var(--navy);font-weight:700;">0 Ads</span>
           </div>
           <div class="table-wrap" style="box-shadow:none;border-radius:6px;">
             <table>
-              <thead>
+              <thead id="campAdsTableHead">
                 <tr>
                   <th>Ad Name &amp; ID</th>
                   <th>Target Ad Set</th>
@@ -1153,10 +1149,10 @@ tr:hover td {
                 </tr>
               </thead>
               <tbody id="campAdsTableBody">
-                <tr><td colspan="7" style="text-align:center;padding:16px;color:var(--muted);">Select or enter a campaign to view ad-level results.</td></tr>
+                <tr><td colspan="8" style="text-align:center;padding:16px;color:var(--muted);">Select or enter a campaign to view ad-level results.</td></tr>
               </tbody>
             </table>
-          </div>>
+          </div>
         </div>
       </div>
 
@@ -2008,6 +2004,8 @@ tr:hover td {
     }
   }
 
+  let currentCampaignData = null;
+
   async function trackSingleCampaign(campaignId, datePreset = null) {
     const cid = (campaignId || document.getElementById('metaCampaignIdInput')?.value || document.getElementById('metaCampaignSelect')?.value || '').trim();
     if (!cid) {
@@ -2043,6 +2041,11 @@ tr:hover td {
         return;
       }
 
+      currentCampaignData = data;
+      const m = data.metaMetrics || {};
+      const cat = data.campaignCategory || 'LEAD_GENERATION';
+      const ads = data.ads || [];
+
       const box = document.getElementById('campaignAnalyticsResultBox');
       if (box) box.style.display = 'block';
 
@@ -2050,83 +2053,431 @@ tr:hover td {
       if (document.getElementById('campResultId')) document.getElementById('campResultId').textContent = data.campaignId;
       if (document.getElementById('campResultBadge')) document.getElementById('campResultBadge').textContent = data.status || 'ACTIVE';
 
-      // Objective & Category Badge
-      const isLeadGen = data.campaignCategory === 'LEAD_GENERATION';
-      const objEl = document.getElementById('campResultObjective');
-      if (objEl) {
-        objEl.textContent = isLeadGen ? '🎯 LEAD GENERATION CAMPAIGN' : '🌐 WEBSITE VISITS CAMPAIGN';
-        objEl.style.background = isLeadGen ? 'rgba(46,125,50,0.12)' : 'rgba(23,105,170,0.12)';
-        objEl.style.color = isLeadGen ? 'var(--success)' : 'var(--blue)';
+      // Deep link to Ads Manager
+      const adsManagerLink = document.getElementById('campAdsManagerLink');
+      if (adsManagerLink) {
+        adsManagerLink.href = `https://adsmanager.facebook.com/adsmanager/manage/campaigns?selected_campaign_ids=${encodeURIComponent(data.campaignId)}`;
       }
 
-      const m = data.metaMetrics || {};
-      if (document.getElementById('campMetricSpend')) document.getElementById('campMetricSpend').textContent = `₹${parseFloat(m.spend || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}`;
-      if (document.getElementById('campMetricImpressions')) document.getElementById('campMetricImpressions').textContent = (m.impressions || 0).toLocaleString();
-      if (document.getElementById('campMetricReach')) document.getElementById('campMetricReach').textContent = (m.reach || 0).toLocaleString();
-      if (document.getElementById('campMetricClicks')) document.getElementById('campMetricClicks').textContent = (m.clicks || 0).toLocaleString();
-      if (document.getElementById('campMetricCpc')) document.getElementById('campMetricCpc').textContent = `₹${parseFloat(m.cpc || 0).toFixed(2)}`;
-      if (document.getElementById('campMetricCtr')) document.getElementById('campMetricCtr').textContent = `${parseFloat(m.ctr || 0).toFixed(2)}%`;
+      // Objective & Category Configuration for 6 Campaign Types
+      const categoryConfig = {
+        'LEAD_GENERATION': {
+          label: '🎯 LEAD GENERATION (Instant Forms)',
+          bg: 'rgba(46,125,50,0.12)',
+          color: 'var(--success)',
+          goalTitle: 'Verified Meta Lead Acquisition Goal',
+          goalDesc: 'Submitted directly through Meta Instant Forms & synced with CRM / Google Sheets.',
+          goalCount: `${(m.leads || 0).toLocaleString()} Leads Acquired`,
+          subMetricLabel: 'Cost Per Lead (CPL)',
+          subMetricValue: m.costPerLead ? '₹' + m.costPerLead : (m.leads > 0 ? '₹' + (parseFloat(m.spend || 0) / m.leads).toFixed(2) : 'N/A')
+        },
+        'WEBSITE_VISITS': {
+          label: '🌐 WEBSITE TRAFFIC & VISITS',
+          bg: 'rgba(23,105,170,0.12)',
+          color: 'var(--blue)',
+          goalTitle: 'Website Traffic & On-Site Engagement Goal',
+          goalDesc: 'Visitors navigated directly to event landing page tracked by Meta pixel & server telemetry.',
+          goalCount: `${(m.landingPageViews || m.linkClicks || m.clicks || 0).toLocaleString()} Landing Page Views`,
+          subMetricLabel: 'Cost / Landing View',
+          subMetricValue: m.costPerLandingPageView ? '₹' + m.costPerLandingPageView : '₹' + (m.cpc || '0.00')
+        },
+        'BRAND_AWARENESS': {
+          label: '📢 BRAND AWARENESS & REACH',
+          bg: 'rgba(123,31,162,0.12)',
+          color: '#7b1fa2',
+          goalTitle: 'Brand Visibility & Audience Reach Goal',
+          goalDesc: 'Unique individuals exposed to brand messaging and scholarship awareness across feeds.',
+          goalCount: `${(m.reach || 0).toLocaleString()} People Reached`,
+          subMetricLabel: 'CPM (Cost per 1k)',
+          subMetricValue: '₹' + (m.cpm || '0.00')
+        },
+        'ENGAGEMENT': {
+          label: '🔥 POST & VIDEO ENGAGEMENT',
+          bg: 'rgba(230,81,0,0.12)',
+          color: '#e65100',
+          goalTitle: 'Content Engagement & Video Consumption Goal',
+          goalDesc: 'Reactions, comments, shares, and video play interactions across feeds and reels.',
+          goalCount: `${(m.engagements || m.clicks || 0).toLocaleString()} Engagements`,
+          subMetricLabel: 'Cost / Engagement',
+          subMetricValue: m.costPerEngagement ? '₹' + m.costPerEngagement : '₹' + (m.cpc || '0.00')
+        },
+        'SALES_CONVERSIONS': {
+          label: '🛍️ SALES & CONVERSIONS',
+          bg: 'rgba(0,121,107,0.12)',
+          color: '#00796b',
+          goalTitle: 'Direct Conversions & Registrations Goal',
+          goalDesc: 'High-intent transaction completions and event candidate registrations.',
+          goalCount: `${(m.purchases || 0).toLocaleString()} Conversions`,
+          subMetricLabel: 'Cost / Conversion',
+          subMetricValue: m.costPerPurchase ? '₹' + m.costPerPurchase : 'N/A'
+        },
+        'APP_PROMOTION': {
+          label: '📱 APP PROMOTION & INSTALLS',
+          bg: 'rgba(57,73,171,0.12)',
+          color: '#3949ab',
+          goalTitle: 'App Installation & Onboarding Goal',
+          goalDesc: 'Mobile application downloads and launch onboarding.',
+          goalCount: `${(m.appInstalls || 0).toLocaleString()} App Installs`,
+          subMetricLabel: 'Cost / Install (CPI)',
+          subMetricValue: m.costPerAppInstall ? '₹' + m.costPerAppInstall : 'N/A'
+        }
+      };
 
-      // Dynamic Highlight Primary Goal Card:
-      const goalBox = document.getElementById('campGoalMetricBox');
-      if (goalBox) {
-        if (isLeadGen) {
-          goalBox.innerHTML = `
-            <div style="background:#e8f5e9;border:1px solid rgba(46,125,50,0.3);padding:14px 18px;border-radius:8px;margin-bottom:14px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;">
+      const curConfig = categoryConfig[cat] || categoryConfig['LEAD_GENERATION'];
+      const objEl = document.getElementById('campResultObjective');
+      if (objEl) {
+        objEl.textContent = curConfig.label;
+        objEl.style.background = curConfig.bg;
+        objEl.style.color = curConfig.color;
+      }
+
+      // Executive Creative Insights Banner (Winner & Low Performer)
+      const insightsBanner = document.getElementById('campExecInsightsBanner');
+      if (insightsBanner) {
+        const topAd = ads.find(a => a.isTopPerformer);
+        const bleedAds = ads.filter(a => a.isZeroConversions);
+        let bannerHtml = '';
+
+        if (topAd) {
+          let metricStr = '';
+          if (cat === 'LEAD_GENERATION') {
+            metricStr = `<b>${topAd.leads} Leads</b> at <b>${topAd.costPerLead ? '₹' + topAd.costPerLead : '₹0.00'} CPL</b> (${topAd.cvr}% CVR)`;
+          } else if (cat === 'WEBSITE_VISITS') {
+            metricStr = `<b>${topAd.landingPageViews || topAd.clicks} Page Views</b> at <b>₹${topAd.costPerLandingPageView || topAd.cpc}</b>`;
+          } else {
+            metricStr = `<b>${topAd.clicks} Clicks</b> at <b>₹${topAd.cpc} CPC</b>`;
+          }
+
+          bannerHtml += `
+            <div style="background:#f0fdf4;border:1px solid #bbf7d0;border-left:4px solid var(--success);padding:10px 14px;border-radius:6px;font-size:12px;color:#166534;margin-bottom:8px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;">
               <div>
-                <span style="font-size:11px;font-weight:800;color:var(--success);text-transform:uppercase;letter-spacing:.04em;display:block;">Verified Meta Lead Acquisition Goal</span>
-                <b style="font-size:24px;color:#1b5e20;">${(m.metaLeadsCount || 0).toLocaleString()} Leads Acquired</b>
-                <span style="font-size:12px;color:var(--muted);display:block;margin-top:2px;">Submitted directly through Meta Instant Forms and synced with CRM.</span>
+                <b>🏆 TOP PERFORMING CREATIVE:</b> <span style="font-weight:700;color:var(--navy);">${escapeHtml(topAd.ad_name)}</span> &mdash; Generated ${metricStr}.
               </div>
-              <div style="text-align:right;">
-                <span style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;display:block;">Cost Per Lead (CPL)</span>
-                <b style="font-size:20px;color:var(--navy);">${m.costPerLead ? '₹' + m.costPerLead : 'N/A'}</b>
-              </div>
+              <span class="badge" style="background:#dcfce7;color:#15803d;font-weight:700;">Scale Recommendation</span>
             </div>
           `;
-        } else {
-          const lpa = data.landingPageAnalytics || {};
-          goalBox.innerHTML = `
-            <div style="background:#e3f2fd;border:1px solid rgba(23,105,170,0.3);padding:14px 18px;border-radius:8px;margin-bottom:14px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;">
+        }
+
+        if (bleedAds.length > 0) {
+          bannerHtml += `
+            <div style="background:#fff1f2;border:1px solid #fecdd3;border-left:4px solid #e11d48;padding:10px 14px;border-radius:6px;font-size:12px;color:#9f1239;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;">
               <div>
-                <span style="font-size:11px;font-weight:800;color:var(--blue);text-transform:uppercase;letter-spacing:.04em;display:block;">Website Traffic &amp; On-Site Engagement Goal</span>
-                <b style="font-size:24px;color:var(--blue);">${(m.landingPageViews || m.clicks || 0).toLocaleString()} Landing Page Views</b>
-                <span style="font-size:12px;color:var(--muted);display:block;margin-top:2px;">Visitors navigated directly to event.mymentorcircle.com from ad clicks.</span>
+                <b>⚠️ BUDGET BLEED WARNING:</b> ${bleedAds.map(a => `<span style="font-weight:700;">${escapeHtml(a.ad_name)} (Spent ₹${a.spend})</span>`).join(', ')} accumulated ad spend with 0 conversions.
               </div>
-              <div style="display:flex;gap:20px;text-align:right;">
-                <div>
-                  <span style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;display:block;">Cost / View</span>
-                  <b style="font-size:18px;color:var(--navy);">${m.costPerLandingPageView ? '₹' + m.costPerLandingPageView : '₹' + (m.cpc || '0.00')}</b>
-                </div>
-                <div>
-                  <span style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;display:block;">On-Site Conversions</span>
-                  <b style="font-size:18px;color:var(--success);">${lpa.conversions || 0} (${lpa.conversionRate || '0.0'}%)</b>
-                </div>
-              </div>
+              <span class="badge" style="background:#ffe4e6;color:#be123c;font-weight:700;">Consider Pausing</span>
             </div>
+          `;
+        }
+
+        if (bannerHtml) {
+          insightsBanner.innerHTML = bannerHtml;
+          insightsBanner.style.display = 'block';
+        } else {
+          insightsBanner.style.display = 'none';
+        }
+      }
+
+      // Goal Metric Box
+      const goalBox = document.getElementById('campGoalMetricBox');
+      if (goalBox) {
+        goalBox.innerHTML = `
+          <div style="background:${curConfig.bg};border:1px solid ${curConfig.color};padding:14px 18px;border-radius:8px;margin-bottom:14px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;">
+            <div>
+              <span style="font-size:11px;font-weight:800;color:${curConfig.color};text-transform:uppercase;letter-spacing:.04em;display:block;">${curConfig.goalTitle}</span>
+              <b style="font-size:24px;color:var(--navy);">${curConfig.goalCount}</b>
+              <span style="font-size:12px;color:var(--muted);display:block;margin-top:2px;">${curConfig.goalDesc}</span>
+            </div>
+            <div style="text-align:right;">
+              <span style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;display:block;">${curConfig.subMetricLabel}</span>
+              <b style="font-size:22px;color:${curConfig.color};">${curConfig.subMetricValue}</b>
+            </div>
+          </div>
+        `;
+      }
+
+      // Top 6 Metrics Grid - Tailored to Category
+      const grid = document.getElementById('campTopMetricsGrid');
+      if (grid) {
+        let cards = [];
+        const spendStr = `₹${parseFloat(m.spend || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}`;
+        const impStr = (m.impressions || 0).toLocaleString();
+        const reachStr = (m.reach || 0).toLocaleString();
+        const clicksStr = (m.linkClicks || m.clicks || 0).toLocaleString();
+        const cpcStr = `₹${parseFloat(m.cpc || 0).toFixed(2)}`;
+        const ctrStr = `${parseFloat(m.ctr || 0).toFixed(2)}%`;
+
+        if (cat === 'LEAD_GENERATION') {
+          const leadCount = (m.leads || 0).toLocaleString();
+          const cplStr = m.costPerLead ? `₹${m.costPerLead}` : (m.leads > 0 ? `₹${(parseFloat(m.spend || 0) / m.leads).toFixed(2)}` : '₹0.00');
+          const cvrStr = (m.clicks > 0 && m.leads > 0) ? `${((m.leads / m.clicks) * 100).toFixed(1)}%` : '0.0%';
+          cards = [
+            { label: 'Ad Spend', val: spendStr, color: 'var(--navy)' },
+            { label: 'Verified Leads', val: leadCount, color: 'var(--success)' },
+            { label: 'Cost Per Lead (CPL)', val: cplStr, color: 'var(--success)' },
+            { label: 'Link Clicks', val: clicksStr, color: 'var(--blue)' },
+            { label: 'Click Rate (CTR)', val: ctrStr, color: 'var(--navy)' },
+            { label: 'Lead CVR %', val: cvrStr, color: 'var(--navy)' }
+          ];
+        } else if (cat === 'WEBSITE_VISITS') {
+          const lpvStr = (m.landingPageViews || m.clicks || 0).toLocaleString();
+          const costLpv = m.costPerLandingPageView ? `₹${m.costPerLandingPageView}` : cpcStr;
+          cards = [
+            { label: 'Ad Spend', val: spendStr, color: 'var(--navy)' },
+            { label: 'Landing Page Views', val: lpvStr, color: 'var(--blue)' },
+            { label: 'Cost / LP View', val: costLpv, color: 'var(--blue)' },
+            { label: 'Link Clicks', val: clicksStr, color: 'var(--navy)' },
+            { label: 'Average CPC', val: cpcStr, color: 'var(--navy)' },
+            { label: 'Click Rate (CTR)', val: ctrStr, color: 'var(--success)' }
+          ];
+        } else if (cat === 'BRAND_AWARENESS') {
+          const cpmStr = `₹${parseFloat(m.cpm || 0).toFixed(2)}`;
+          const freqStr = (m.reach > 0 ? (m.impressions / m.reach).toFixed(2) : '1.00');
+          cards = [
+            { label: 'Ad Spend', val: spendStr, color: 'var(--navy)' },
+            { label: 'Unique Reach', val: reachStr, color: '#7b1fa2' },
+            { label: 'Total Impressions', val: impStr, color: 'var(--navy)' },
+            { label: 'CPM (Cost / 1k)', val: cpmStr, color: 'var(--navy)' },
+            { label: 'Frequency', val: freqStr, color: 'var(--navy)' },
+            { label: 'Clicks', val: clicksStr, color: 'var(--blue)' }
+          ];
+        } else if (cat === 'ENGAGEMENT') {
+          const engStr = (m.engagements || m.clicks || 0).toLocaleString();
+          const costEng = m.costPerEngagement ? `₹${m.costPerEngagement}` : cpcStr;
+          const vidStr = (m.videoViews || 0).toLocaleString();
+          cards = [
+            { label: 'Ad Spend', val: spendStr, color: 'var(--navy)' },
+            { label: 'Engagements', val: engStr, color: '#e65100' },
+            { label: 'Cost / Engagement', val: costEng, color: '#e65100' },
+            { label: 'Video Views', val: vidStr, color: 'var(--navy)' },
+            { label: 'Impressions', val: impStr, color: 'var(--navy)' },
+            { label: 'Click Rate (CTR)', val: ctrStr, color: 'var(--success)' }
+          ];
+        } else if (cat === 'SALES_CONVERSIONS') {
+          const convStr = (m.purchases || 0).toLocaleString();
+          const costConv = m.costPerPurchase ? `₹${m.costPerPurchase}` : 'N/A';
+          cards = [
+            { label: 'Ad Spend', val: spendStr, color: 'var(--navy)' },
+            { label: 'Conversions', val: convStr, color: '#00796b' },
+            { label: 'Cost / Conv', val: costConv, color: '#00796b' },
+            { label: 'Clicks', val: clicksStr, color: 'var(--blue)' },
+            { label: 'Average CPC', val: cpcStr, color: 'var(--navy)' },
+            { label: 'Click Rate (CTR)', val: ctrStr, color: 'var(--success)' }
+          ];
+        } else {
+          // APP_PROMOTION
+          const instStr = (m.appInstalls || 0).toLocaleString();
+          const costInst = m.costPerAppInstall ? `₹${m.costPerAppInstall}` : 'N/A';
+          cards = [
+            { label: 'Ad Spend', val: spendStr, color: 'var(--navy)' },
+            { label: 'App Installs', val: instStr, color: '#3949ab' },
+            { label: 'Cost / Install (CPI)', val: costInst, color: '#3949ab' },
+            { label: 'Impressions', val: impStr, color: 'var(--navy)' },
+            { label: 'Clicks', val: clicksStr, color: 'var(--blue)' },
+            { label: 'Click Rate (CTR)', val: ctrStr, color: 'var(--success)' }
+          ];
+        }
+
+        grid.innerHTML = cards.map(c => `
+          <div style="background:var(--soft);padding:10px 12px;border-radius:6px;">
+            <span style="font-size:11px;color:var(--muted);text-transform:uppercase;font-weight:700;display:block;">${c.label}</span>
+            <b style="font-size:17px;color:${c.color};">${c.val}</b>
+          </div>
+        `).join('');
+      }
+
+      // Ads breakdown table: Header & Rows tailored to Campaign Category
+      const headEl = document.getElementById('campAdsTableHead');
+      const adsBody = document.getElementById('campAdsTableBody');
+      if (document.getElementById('campAdsCountBadge')) {
+        document.getElementById('campAdsCountBadge').textContent = `${ads.length} Ads`;
+      }
+
+      if (headEl) {
+        if (cat === 'LEAD_GENERATION') {
+          headEl.innerHTML = `
+            <tr>
+              <th>Ad / Creative</th>
+              <th>Target Ad Set</th>
+              <th>Spend</th>
+              <th style="color:var(--success);">Leads 🎯</th>
+              <th style="color:var(--success);">Cost Per Lead (CPL)</th>
+              <th>Clicks</th>
+              <th>CVR %</th>
+              <th>Efficiency Status</th>
+            </tr>
+          `;
+        } else if (cat === 'WEBSITE_VISITS') {
+          headEl.innerHTML = `
+            <tr>
+              <th>Ad / Creative</th>
+              <th>Target Ad Set</th>
+              <th>Spend</th>
+              <th style="color:var(--blue);">Landing Page Views 🌐</th>
+              <th style="color:var(--blue);">Cost / View</th>
+              <th>Link Clicks</th>
+              <th>CTR %</th>
+              <th>Efficiency Status</th>
+            </tr>
+          `;
+        } else if (cat === 'BRAND_AWARENESS') {
+          headEl.innerHTML = `
+            <tr>
+              <th>Ad / Creative</th>
+              <th>Target Ad Set</th>
+              <th>Spend</th>
+              <th style="color:#7b1fa2;">Reach 📢</th>
+              <th>Impressions</th>
+              <th>CPM</th>
+              <th>CTR %</th>
+              <th>Efficiency Status</th>
+            </tr>
+          `;
+        } else if (cat === 'ENGAGEMENT') {
+          headEl.innerHTML = `
+            <tr>
+              <th>Ad / Creative</th>
+              <th>Target Ad Set</th>
+              <th>Spend</th>
+              <th style="color:#e65100;">Engagements 🔥</th>
+              <th>Cost / Eng</th>
+              <th>Video Views</th>
+              <th>CTR %</th>
+              <th>Efficiency Status</th>
+            </tr>
+          `;
+        } else if (cat === 'SALES_CONVERSIONS') {
+          headEl.innerHTML = `
+            <tr>
+              <th>Ad / Creative</th>
+              <th>Target Ad Set</th>
+              <th>Spend</th>
+              <th style="color:#00796b;">Conversions 🛍️</th>
+              <th>Cost / Conv</th>
+              <th>Clicks</th>
+              <th>CVR %</th>
+              <th>Efficiency Status</th>
+            </tr>
+          `;
+        } else {
+          headEl.innerHTML = `
+            <tr>
+              <th>Ad / Creative</th>
+              <th>Target Ad Set</th>
+              <th>Spend</th>
+              <th style="color:#3949ab;">Installs 📱</th>
+              <th>Cost / Install</th>
+              <th>Clicks</th>
+              <th>CTR %</th>
+              <th>Efficiency Status</th>
+            </tr>
           `;
         }
       }
 
-      // Ads breakdown table
-      const adsBody = document.getElementById('campAdsTableBody');
-      const ads = data.ads || [];
-      if (document.getElementById('campAdsCountBadge')) document.getElementById('campAdsCountBadge').textContent = `${ads.length} Ads`;
       if (adsBody) {
         if (ads.length > 0) {
-          adsBody.innerHTML = ads.map(ad => `
-            <tr>
-              <td><b>${escapeHtml(ad.ad_name)}</b><br><small style="color:var(--muted);">${ad.ad_id}</small></td>
-              <td>${escapeHtml(ad.adset_name || 'Broad Target')}</td>
-              <td><b>₹${ad.spend}</b></td>
-              <td>${ad.impressions.toLocaleString()}</td>
-              <td><b style="color:var(--blue);">${ad.clicks.toLocaleString()}</b></td>
-              <td>₹${ad.cpc}</td>
-              <td><span class="badge badge-synced">${ad.ctr}%</span></td>
-            </tr>
-          `).join('');
+          adsBody.innerHTML = ads.map(ad => {
+            let statusBadge = '<span class="badge badge-synced">Active</span>';
+            if (ad.isTopPerformer) {
+              statusBadge = '<span class="badge" style="background:#dcfce7;color:#15803d;font-weight:800;border:1px solid #86efac;">🏆 TOP PERFORMER</span>';
+            } else if (ad.isZeroConversions) {
+              statusBadge = '<span class="badge" style="background:#fee2e2;color:#991b1b;font-weight:800;border:1px solid #fca5a5;">⚠️ 0 CONVERSIONS</span>';
+            }
+
+            if (cat === 'LEAD_GENERATION') {
+              const cplDisplay = ad.costPerLead ? `₹${ad.costPerLead}` : (ad.leads > 0 ? `₹${(parseFloat(ad.spend)/ad.leads).toFixed(2)}` : '—');
+              return `
+                <tr style="${ad.isTopPerformer ? 'background:#fcfdfa;' : (ad.isZeroConversions ? 'background:#fffafa;' : '')}">
+                  <td>
+                    <b>${escapeHtml(ad.ad_name)}</b><br>
+                    <small style="color:var(--muted);">${ad.ad_id}</small>
+                  </td>
+                  <td>${escapeHtml(ad.adset_name || 'Broad Target')}</td>
+                  <td><b>₹${ad.spend}</b></td>
+                  <td><b style="color:var(--success);font-size:15px;">${ad.leads}</b></td>
+                  <td><b style="color:var(--navy);">${cplDisplay}</b></td>
+                  <td><b>${ad.clicks.toLocaleString()}</b></td>
+                  <td><span class="badge badge-synced">${ad.cvr}%</span></td>
+                  <td>${statusBadge}</td>
+                </tr>
+              `;
+            } else if (cat === 'WEBSITE_VISITS') {
+              const costLpvDisplay = ad.costPerLandingPageView ? `₹${ad.costPerLandingPageView}` : `₹${ad.cpc}`;
+              return `
+                <tr style="${ad.isTopPerformer ? 'background:#f8fbff;' : ''}">
+                  <td>
+                    <b>${escapeHtml(ad.ad_name)}</b><br>
+                    <small style="color:var(--muted);">${ad.ad_id}</small>
+                  </td>
+                  <td>${escapeHtml(ad.adset_name || 'Broad Target')}</td>
+                  <td><b>₹${ad.spend}</b></td>
+                  <td><b style="color:var(--blue);font-size:15px;">${(ad.landingPageViews || ad.clicks).toLocaleString()}</b></td>
+                  <td><b>${costLpvDisplay}</b></td>
+                  <td><b>${ad.clicks.toLocaleString()}</b></td>
+                  <td><span class="badge badge-synced">${ad.ctr}%</span></td>
+                  <td>${statusBadge}</td>
+                </tr>
+              `;
+            } else if (cat === 'BRAND_AWARENESS') {
+              const cpmDisplay = ad.impressions > 0 ? `₹${((parseFloat(ad.spend) / ad.impressions) * 1000).toFixed(2)}` : '—';
+              return `
+                <tr>
+                  <td><b>${escapeHtml(ad.ad_name)}</b><br><small style="color:var(--muted);">${ad.ad_id}</small></td>
+                  <td>${escapeHtml(ad.adset_name || 'Broad Target')}</td>
+                  <td><b>₹${ad.spend}</b></td>
+                  <td><b style="color:#7b1fa2;font-size:15px;">${ad.reach.toLocaleString()}</b></td>
+                  <td>${ad.impressions.toLocaleString()}</td>
+                  <td>${cpmDisplay}</td>
+                  <td><span class="badge badge-synced">${ad.ctr}%</span></td>
+                  <td>${statusBadge}</td>
+                </tr>
+              `;
+            } else if (cat === 'ENGAGEMENT') {
+              const costEngDisplay = ad.costPerEngagement ? `₹${ad.costPerEngagement}` : `₹${ad.cpc}`;
+              return `
+                <tr>
+                  <td><b>${escapeHtml(ad.ad_name)}</b><br><small style="color:var(--muted);">${ad.ad_id}</small></td>
+                  <td>${escapeHtml(ad.adset_name || 'Broad Target')}</td>
+                  <td><b>₹${ad.spend}</b></td>
+                  <td><b style="color:#e65100;font-size:15px;">${(ad.engagements || ad.clicks).toLocaleString()}</b></td>
+                  <td><b>${costEngDisplay}</b></td>
+                  <td>${(ad.videoViews || 0).toLocaleString()}</td>
+                  <td><span class="badge badge-synced">${ad.ctr}%</span></td>
+                  <td>${statusBadge}</td>
+                </tr>
+              `;
+            } else if (cat === 'SALES_CONVERSIONS') {
+              const costConvDisplay = ad.costPerPurchase ? `₹${ad.costPerPurchase}` : '—';
+              return `
+                <tr>
+                  <td><b>${escapeHtml(ad.ad_name)}</b><br><small style="color:var(--muted);">${ad.ad_id}</small></td>
+                  <td>${escapeHtml(ad.adset_name || 'Broad Target')}</td>
+                  <td><b>₹${ad.spend}</b></td>
+                  <td><b style="color:#00796b;font-size:15px;">${ad.purchases}</b></td>
+                  <td><b>${costConvDisplay}</b></td>
+                  <td>${ad.clicks.toLocaleString()}</td>
+                  <td><span class="badge badge-synced">${ad.cvr}%</span></td>
+                  <td>${statusBadge}</td>
+                </tr>
+              `;
+            } else {
+              const costInstDisplay = ad.costPerAppInstall ? `₹${ad.costPerAppInstall}` : '—';
+              return `
+                <tr>
+                  <td><b>${escapeHtml(ad.ad_name)}</b><br><small style="color:var(--muted);">${ad.ad_id}</small></td>
+                  <td>${escapeHtml(ad.adset_name || 'Broad Target')}</td>
+                  <td><b>₹${ad.spend}</b></td>
+                  <td><b style="color:#3949ab;font-size:15px;">${ad.appInstalls}</b></td>
+                  <td><b>${costInstDisplay}</b></td>
+                  <td>${ad.clicks.toLocaleString()}</td>
+                  <td><span class="badge badge-synced">${ad.ctr}%</span></td>
+                  <td>${statusBadge}</td>
+                </tr>
+              `;
+            }
+          }).join('');
         } else {
-          adsBody.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:16px;color:var(--muted);">No individual ad impressions in this range.</td></tr>';
+          adsBody.innerHTML = '<tr><td colspan="8" style="text-align:center;padding:16px;color:var(--muted);">No individual ad impressions in this range.</td></tr>';
         }
       }
 
@@ -2137,6 +2488,79 @@ tr:hover td {
       if (btn) { btn.disabled = false; btn.textContent = 'Track Campaign'; }
     }
   }
+
+  // Copy Executive Briefing to Clipboard
+  document.getElementById('btnCopyExecSummary')?.addEventListener('click', () => {
+    if (!currentCampaignData) {
+      alert('Please track a campaign first.');
+      return;
+    }
+    const d = currentCampaignData;
+    const m = d.metaMetrics || {};
+    const cat = d.campaignCategory || 'LEAD_GENERATION';
+    const topAd = (d.ads || []).find(a => a.isTopPerformer);
+
+    let summaryText = `📊 Meta Campaign Executive Briefing\n`;
+    summaryText += `Campaign: ${d.campaignName} (ID: ${d.campaignId})\n`;
+    summaryText += `Category: ${cat} | Status: ${d.status || 'ACTIVE'}\n`;
+    summaryText += `Ad Spend: ₹${m.spend} | Impressions: ${(m.impressions || 0).toLocaleString()} | Clicks: ${(m.linkClicks || m.clicks || 0).toLocaleString()} (CTR: ${m.ctr}%)\n`;
+    if (cat === 'LEAD_GENERATION') {
+      summaryText += `🎯 Leads: ${m.leads || 0} | CPL: ₹${m.costPerLead || '0.00'}\n`;
+    } else if (cat === 'WEBSITE_VISITS') {
+      summaryText += `🌐 Landing Page Views: ${m.landingPageViews || m.clicks || 0} | Cost/View: ₹${m.costPerLandingPageView || m.cpc || '0.00'}\n`;
+    }
+    if (topAd) {
+      summaryText += `🏆 Top Creative: ${topAd.ad_name} (${topAd.leads ? topAd.leads + ' leads @ ₹' + topAd.costPerLead : topAd.clicks + ' clicks'})\n`;
+    }
+    summaryText += `Direct Link: https://adsmanager.facebook.com/adsmanager/manage/campaigns?selected_campaign_ids=${d.campaignId}\n`;
+
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(summaryText).then(() => {
+        alert('📋 Executive briefing copied to clipboard! Ready to share on WhatsApp or Slack.');
+      }).catch(() => {
+        prompt('Copy briefing text:', summaryText);
+      });
+    } else {
+      prompt('Copy briefing text:', summaryText);
+    }
+  });
+
+  // Export Campaign Ad Breakdown CSV
+  document.getElementById('btnExportCampCsv')?.addEventListener('click', () => {
+    if (!currentCampaignData || !currentCampaignData.ads || currentCampaignData.ads.length === 0) {
+      alert('No ad breakdown data available to export.');
+      return;
+    }
+    const ads = currentCampaignData.ads;
+    const headers = ['Ad Name', 'Ad ID', 'Ad Set Name', 'Ad Set ID', 'Spend (INR)', 'Impressions', 'Clicks', 'CPC', 'CTR (%)', 'Leads', 'Cost Per Lead', 'Landing Page Views', 'Conversion Rate (%)', 'Top Performer'];
+    
+    const rows = ads.map(a => [
+      `"${(a.ad_name || '').replace(/"/g, '""')}"`,
+      `"${a.ad_id}"`,
+      `"${(a.adset_name || '').replace(/"/g, '""')}"`,
+      `"${a.adset_id || ''}"`,
+      a.spend,
+      a.impressions,
+      a.clicks,
+      a.cpc,
+      a.ctr,
+      a.leads || 0,
+      a.costPerLead || '',
+      a.landingPageViews || 0,
+      a.cvr || '0.0',
+      a.isTopPerformer ? 'YES' : 'NO'
+    ]);
+
+    const csvContent = [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.setAttribute('href', url);
+    link.setAttribute('download', `meta_campaign_${currentCampaignData.campaignId}_${new Date().toISOString().slice(0, 10)}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  });
 
   document.getElementById('metaCampaignSelect')?.addEventListener('change', function() {
     if (this.value) {

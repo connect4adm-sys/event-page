@@ -8,7 +8,7 @@ const http = require('node:http');
 const server = require('./server');
 const db = require('./src/db');
 
-const TEST_PORT = 3000;
+const TEST_PORT = 3099;
 const BASE_URL = `http://127.0.0.1:${TEST_PORT}`;
 
 function makeRequest(method, path, body = null, headers = {}) {
@@ -47,6 +47,12 @@ function makeRequest(method, path, body = null, headers = {}) {
 }
 
 async function runTests() {
+  await new Promise((resolve, reject) => {
+    server.listen(TEST_PORT, '127.0.0.1', () => {
+      resolve();
+    }).on('error', reject);
+  });
+
   console.log('================================================================');
   console.log('STARTING MMC LEAD INFRASTRUCTURE TEST SUITE');
   console.log('================================================================');
@@ -320,6 +326,14 @@ async function runTests() {
     assert(metaCampRes.status === 200, 'GET /api/admin/meta/campaign/:id (maximum) returns 200');
     assert(metaCampRes.json && metaCampRes.json.success === true, 'Meta campaign intelligence responds with success');
     assert(metaCampRes.json.metaMetrics && metaCampRes.json.metaMetrics.landingPageViews > 0, 'Landing page views extracted from Meta API');
+    assert(['LEAD_GENERATION', 'WEBSITE_VISITS', 'BRAND_AWARENESS', 'ENGAGEMENT', 'SALES_CONVERSIONS', 'APP_PROMOTION'].includes(metaCampRes.json.campaignCategory), 'Multi-objective campaign category classified accurately');
+    assert(Array.isArray(metaCampRes.json.ads), 'Ad-level breakdown array returned');
+    if (metaCampRes.json.ads.length > 0) {
+      const firstAd = metaCampRes.json.ads[0];
+      assert(typeof firstAd.leads !== 'undefined', 'Ad contains verified leads count');
+      assert(typeof firstAd.cvr !== 'undefined', 'Ad contains conversion rate (CVR %)');
+      assert(typeof firstAd.isTopPerformer === 'boolean', 'Ad contains isTopPerformer badge attribute');
+    }
     assert(metaCampRes.json.landingPageAnalytics && Array.isArray(metaCampRes.json.landingPageAnalytics.recentSessions), 'Local on-site sessions matched with campaign');
 
     // Test 9: Meta Lead Ads Webhook Ingestion
@@ -371,6 +385,8 @@ async function runTests() {
     console.log(`TEST SUITE FINISHED: ${passed} PASSED, ${failed} FAILED`);
     console.log('PRODUCTION DATABASE IS PRISTINE (0 DUMMY LEADS)');
     console.log('================================================================');
+
+    await new Promise(r => server.close(r));
 
     if (failed > 0) {
       process.exit(1);

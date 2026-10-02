@@ -67,6 +67,96 @@ async function listCampaigns() {
   }
 }
 
+function parseMetricsFromActions(actions = [], costPerActions = [], spend = 0, clicks = 0) {
+  const getVal = (types) => {
+    for (const t of types) {
+      const match = actions.find(a => a.action_type === t);
+      if (match) return parseInt(match.value, 10);
+    }
+    return 0;
+  };
+
+  const getCost = (types) => {
+    for (const t of types) {
+      const match = costPerActions.find(a => a.action_type === t);
+      if (match) return parseFloat(match.value).toFixed(2);
+    }
+    return null;
+  };
+
+  // 1. Leads
+  const leads = getVal([
+    'lead', 
+    'onsite_conversion.lead_grouped', 
+    'offsite_complete_registration_add_meta_leads',
+    'offsite_submit_application_add_meta_leads'
+  ]);
+  let cpl = getCost(['lead', 'onsite_conversion.lead_grouped', 'offsite_submit_application_add_meta_leads']);
+  if (!cpl && leads > 0 && spend > 0) cpl = (spend / leads).toFixed(2);
+
+  // 2. Landing Page Views
+  const lpv = getVal(['landing_page_view', 'omni_landing_page_view']);
+  let costPerLpv = getCost(['landing_page_view', 'omni_landing_page_view']);
+  if (!costPerLpv && lpv > 0 && spend > 0) costPerLpv = (spend / lpv).toFixed(2);
+
+  // 3. Link Clicks
+  const linkClicks = getVal(['link_click']) || clicks;
+
+  // 4. Engagements & Video Views
+  const engagements = getVal(['post_engagement', 'page_engagement', 'video_view', 'post_interaction_gross']);
+  const videoViews = getVal(['video_view']);
+  let costPerEngagement = getCost(['post_engagement', 'page_engagement', 'video_view']);
+  if (!costPerEngagement && engagements > 0 && spend > 0) costPerEngagement = (spend / engagements).toFixed(2);
+
+  // 5. Conversions & Purchases
+  const purchases = getVal(['purchase', 'omni_purchase', 'offsite_complete_registration', 'submit_application']);
+  let costPerPurchase = getCost(['purchase', 'omni_purchase', 'submit_application']);
+  if (!costPerPurchase && purchases > 0 && spend > 0) costPerPurchase = (spend / purchases).toFixed(2);
+
+  // 6. App Promotion
+  const appInstalls = getVal(['app_install', 'mobile_app_install', 'omni_app_install']);
+  let costPerAppInstall = getCost(['app_install', 'mobile_app_install', 'omni_app_install']);
+  if (!costPerAppInstall && appInstalls > 0 && spend > 0) costPerAppInstall = (spend / appInstalls).toFixed(2);
+
+  return {
+    leads,
+    costPerLead: cpl,
+    landingPageViews: lpv,
+    costPerLandingPageView: costPerLpv,
+    linkClicks,
+    engagements,
+    videoViews,
+    costPerEngagement,
+    purchases,
+    costPerPurchase,
+    appInstalls,
+    costPerAppInstall
+  };
+}
+
+function determineCampaignCategory(objective, parsedMetrics) {
+  const obj = (objective || '').toUpperCase();
+  if (obj === 'OUTCOME_LEADS' || obj === 'LEAD_GENERATION' || (parsedMetrics.leads > 0 && obj !== 'OUTCOME_TRAFFIC')) {
+    return 'LEAD_GENERATION';
+  }
+  if (obj === 'OUTCOME_TRAFFIC' || obj === 'LINK_CLICKS' || parsedMetrics.landingPageViews > 0) {
+    return 'WEBSITE_VISITS';
+  }
+  if (obj === 'OUTCOME_AWARENESS' || obj === 'BRAND_AWARENESS' || obj === 'REACH') {
+    return 'BRAND_AWARENESS';
+  }
+  if (obj === 'OUTCOME_ENGAGEMENT' || obj === 'POST_ENGAGEMENT' || obj === 'VIDEO_VIEWS') {
+    return 'ENGAGEMENT';
+  }
+  if (obj === 'OUTCOME_SALES' || obj === 'CONVERSIONS' || obj === 'PRODUCT_CATALOG_SALES' || parsedMetrics.purchases > 0) {
+    return 'SALES_CONVERSIONS';
+  }
+  if (obj === 'OUTCOME_APP_PROMOTION' || obj === 'APP_INSTALLS' || parsedMetrics.appInstalls > 0) {
+    return 'APP_PROMOTION';
+  }
+  return parsedMetrics.leads > 0 ? 'LEAD_GENERATION' : 'WEBSITE_VISITS';
+}
+
 /**
  * 2. Get full analytics for a specific Campaign ID
  * Pulls overall campaign metrics, adset breakdowns, ad-level breakdowns,
@@ -115,10 +205,10 @@ async function getCampaignAnalytics(campaignId, options = 'maximum') {
     const campaignInsightsUrl = `https://graph.facebook.com/v19.0/${encodeURIComponent(campaignId)}/insights?fields=spend,impressions,clicks,cpc,ctr,cpm,reach,actions,cost_per_action_type&${dateParam}&access_token=${encodeURIComponent(token)}`;
 
     // 3. Fetch AdSet-Level Insights
-    const adsetInsightsUrl = `https://graph.facebook.com/v19.0/${encodeURIComponent(campaignId)}/insights?level=adset&fields=adset_id,adset_name,spend,impressions,clicks,cpc,ctr,reach&${dateParam}&access_token=${encodeURIComponent(token)}`;
+    const adsetInsightsUrl = `https://graph.facebook.com/v19.0/${encodeURIComponent(campaignId)}/insights?level=adset&fields=adset_id,adset_name,spend,impressions,clicks,cpc,ctr,reach,actions,cost_per_action_type&${dateParam}&access_token=${encodeURIComponent(token)}`;
 
-    // 4. Fetch Ad-Level Insights
-    const adInsightsUrl = `https://graph.facebook.com/v19.0/${encodeURIComponent(campaignId)}/insights?level=ad&fields=ad_id,ad_name,adset_id,adset_name,spend,impressions,clicks,cpc,ctr,reach&${dateParam}&access_token=${encodeURIComponent(token)}`;
+    // 4. Fetch Ad-Level Insights with Actions and Costs
+    const adInsightsUrl = `https://graph.facebook.com/v19.0/${encodeURIComponent(campaignId)}/insights?level=ad&fields=ad_id,ad_name,adset_id,adset_name,spend,impressions,clicks,cpc,ctr,reach,actions,cost_per_action_type&${dateParam}&access_token=${encodeURIComponent(token)}`;
 
     const [campaignRes, insightsRes, adsetRes, adRes] = await Promise.all([
       httpsGetJson(campaignInfoUrl),
@@ -134,28 +224,102 @@ async function getCampaignAnalytics(campaignId, options = 'maximum') {
     const campaignInfo = campaignRes;
     const overallInsight = insightsRes.data && insightsRes.data.length > 0 ? insightsRes.data[0] : null;
 
-    const adsets = (adsetRes.data || []).map(as => ({
-      adset_id: as.adset_id,
-      adset_name: as.adset_name,
-      spend: parseFloat(as.spend || 0).toFixed(2),
-      impressions: parseInt(as.impressions || 0, 10),
-      clicks: parseInt(as.clicks || 0, 10),
-      cpc: parseFloat(as.cpc || 0).toFixed(2),
-      ctr: parseFloat(as.ctr || 0).toFixed(2),
-      reach: parseInt(as.reach || 0, 10)
-    }));
+    const overallSpend = parseFloat(overallInsight?.spend || 0);
+    const overallClicks = parseInt(overallInsight?.clicks || 0, 10);
+    const overallImpressions = parseInt(overallInsight?.impressions || 0, 10);
+    const overallReach = parseInt(overallInsight?.reach || 0, 10);
+    const overallParsed = parseMetricsFromActions(
+      overallInsight?.actions || [],
+      overallInsight?.cost_per_action_type || [],
+      overallSpend,
+      overallClicks
+    );
 
-    const ads = (adRes.data || []).map(ad => ({
-      ad_id: ad.ad_id,
-      ad_name: ad.ad_name,
-      adset_id: ad.adset_id,
-      adset_name: ad.adset_name,
-      spend: parseFloat(ad.spend || 0).toFixed(2),
-      impressions: parseInt(ad.impressions || 0, 10),
-      clicks: parseInt(ad.clicks || 0, 10),
-      cpc: parseFloat(ad.cpc || 0).toFixed(2),
-      ctr: parseFloat(ad.ctr || 0).toFixed(2),
-      reach: parseInt(ad.reach || 0, 10)
+    const campaignCategory = determineCampaignCategory(campaignInfo.objective, overallParsed);
+
+    const adsets = (adsetRes.data || []).map(as => {
+      const sNum = parseFloat(as.spend || 0);
+      const cNum = parseInt(as.clicks || 0, 10);
+      const asParsed = parseMetricsFromActions(as.actions || [], as.cost_per_action_type || [], sNum, cNum);
+      return {
+        adset_id: as.adset_id,
+        adset_name: as.adset_name,
+        spend: sNum.toFixed(2),
+        impressions: parseInt(as.impressions || 0, 10),
+        clicks: cNum,
+        cpc: parseFloat(as.cpc || 0).toFixed(2),
+        ctr: parseFloat(as.ctr || 0).toFixed(2),
+        reach: parseInt(as.reach || 0, 10),
+        leads: asParsed.leads,
+        costPerLead: asParsed.costPerLead,
+        landingPageViews: asParsed.landingPageViews,
+        costPerLandingPageView: asParsed.costPerLandingPageView
+      };
+    });
+
+    const rawAds = (adRes.data || []).map(ad => {
+      const sNum = parseFloat(ad.spend || 0);
+      const cNum = parseInt(ad.clicks || 0, 10);
+      const impNum = parseInt(ad.impressions || 0, 10);
+      const rNum = parseInt(ad.reach || 0, 10);
+      const cpcNum = parseFloat(ad.cpc || 0);
+      const ctrNum = parseFloat(ad.ctr || 0);
+      const adParsed = parseMetricsFromActions(ad.actions || [], ad.cost_per_action_type || [], sNum, cNum);
+
+      let cvr = '0.0';
+      if (campaignCategory === 'LEAD_GENERATION' && cNum > 0 && adParsed.leads > 0) {
+        cvr = ((adParsed.leads / cNum) * 100).toFixed(1);
+      } else if (campaignCategory === 'WEBSITE_VISITS' && cNum > 0 && adParsed.landingPageViews > 0) {
+        cvr = ((adParsed.landingPageViews / cNum) * 100).toFixed(1);
+      }
+
+      return {
+        ad_id: ad.ad_id,
+        ad_name: ad.ad_name,
+        adset_id: ad.adset_id,
+        adset_name: ad.adset_name,
+        spend: sNum.toFixed(2),
+        impressions: impNum,
+        clicks: cNum,
+        cpc: cpcNum.toFixed(2),
+        ctr: ctrNum.toFixed(2),
+        reach: rNum,
+        leads: adParsed.leads,
+        costPerLead: adParsed.costPerLead,
+        landingPageViews: adParsed.landingPageViews,
+        costPerLandingPageView: adParsed.costPerLandingPageView,
+        engagements: adParsed.engagements,
+        costPerEngagement: adParsed.costPerEngagement,
+        videoViews: adParsed.videoViews,
+        purchases: adParsed.purchases,
+        costPerPurchase: adParsed.costPerPurchase,
+        appInstalls: adParsed.appInstalls,
+        costPerAppInstall: adParsed.costPerAppInstall,
+        cvr
+      };
+    });
+
+    // Determine Top Performer Ad
+    let maxGoalValue = -1;
+    let topAdId = null;
+    rawAds.forEach(ad => {
+      let val = 0;
+      if (campaignCategory === 'LEAD_GENERATION') val = ad.leads;
+      else if (campaignCategory === 'WEBSITE_VISITS') val = ad.landingPageViews;
+      else if (campaignCategory === 'BRAND_AWARENESS') val = ad.reach;
+      else if (campaignCategory === 'ENGAGEMENT') val = ad.engagements;
+      else if (campaignCategory === 'SALES_CONVERSIONS') val = ad.purchases;
+      else if (campaignCategory === 'APP_PROMOTION') val = ad.appInstalls;
+      if (val > maxGoalValue && val > 0) {
+        maxGoalValue = val;
+        topAdId = ad.ad_id;
+      }
+    });
+
+    const ads = rawAds.map(ad => ({
+      ...ad,
+      isTopPerformer: ad.ad_id === topAdId,
+      isZeroConversions: parseFloat(ad.spend) > 100 && (campaignCategory === 'LEAD_GENERATION' ? ad.leads === 0 : (campaignCategory === 'WEBSITE_VISITS' ? ad.landingPageViews === 0 : false))
     }));
 
     // 5. Query Local Database for Landing Page Traffic associated with this Campaign
@@ -211,27 +375,6 @@ async function getCampaignAnalytics(campaignId, options = 'maximum') {
       cities[city] = (cities[city] || 0) + 1;
     });
 
-    const actions = overallInsight?.actions || [];
-    const costPerActions = overallInsight?.cost_per_action_type || [];
-
-    const leadAction = actions.find(a => a.action_type === 'lead' || a.action_type === 'onsite_conversion.lead_grouped' || (typeof a.action_type === 'string' && a.action_type.includes('lead')));
-    const metaLeadsCount = leadAction ? parseInt(leadAction.value, 10) : 0;
-
-    const cplAction = costPerActions.find(a => a.action_type === 'lead' || a.action_type === 'onsite_conversion.lead_grouped' || (typeof a.action_type === 'string' && a.action_type.includes('lead')));
-    const costPerLead = cplAction ? parseFloat(cplAction.value).toFixed(2) : null;
-
-    const landingPageViewAction = actions.find(a => a.action_type === 'landing_page_view' || a.action_type === 'omni_landing_page_view');
-    const landingPageViews = landingPageViewAction ? parseInt(landingPageViewAction.value, 10) : 0;
-
-    const costPerLandingAction = costPerActions.find(a => a.action_type === 'landing_page_view' || a.action_type === 'omni_landing_page_view');
-    const costPerLandingPageView = costPerLandingAction ? parseFloat(costPerLandingAction.value).toFixed(2) : null;
-
-    const linkClickAction = actions.find(a => a.action_type === 'link_click');
-    const linkClicks = linkClickAction ? parseInt(linkClickAction.value, 10) : (overallInsight ? parseInt(overallInsight.clicks || 0, 10) : 0);
-
-    const isLeadGen = (campaignInfo.objective === 'OUTCOME_LEADS' || campaignInfo.objective === 'LEAD_GENERATION' || metaLeadsCount > 0);
-    const campaignCategory = isLeadGen ? 'LEAD_GENERATION' : 'WEBSITE_VISITS';
-
     return {
       success: true,
       campaignId,
@@ -249,11 +392,19 @@ async function getCampaignAnalytics(campaignId, options = 'maximum') {
         cpc: overallInsight ? parseFloat(overallInsight.cpc || 0).toFixed(2) : '0.00',
         ctr: overallInsight ? parseFloat(overallInsight.ctr || 0).toFixed(2) : '0.00',
         cpm: overallInsight ? parseFloat(overallInsight.cpm || 0).toFixed(2) : '0.00',
-        metaLeadsCount,
-        costPerLead,
-        landingPageViews,
-        costPerLandingPageView,
-        linkClicks
+        metaLeadsCount: overallParsed.leads,
+        leads: overallParsed.leads,
+        costPerLead: overallParsed.costPerLead,
+        landingPageViews: overallParsed.landingPageViews,
+        costPerLandingPageView: overallParsed.costPerLandingPageView,
+        linkClicks: overallParsed.linkClicks,
+        engagements: overallParsed.engagements,
+        costPerEngagement: overallParsed.costPerEngagement,
+        videoViews: overallParsed.videoViews,
+        purchases: overallParsed.purchases,
+        costPerPurchase: overallParsed.costPerPurchase,
+        appInstalls: overallParsed.appInstalls,
+        costPerAppInstall: overallParsed.costPerAppInstall
       },
       adsets,
       ads,
