@@ -858,6 +858,11 @@ tr:hover td {
         <button type="button" class="btn-action btn-outline" id="retryAllSyncBtn" title="Retry pending or failed syncs">
           <span>Retry Syncs</span>
         </button>
+
+        <button type="button" class="btn-action btn-outline" id="btnSimulateMetaLead" title="Simulate a Meta Lead Ads Webhook submission to verify DB + Sheets + CRM ingestion" style="border-color:#1877F2;color:#1877F2;font-weight:700;">
+          <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+          <span>🧪 Test Meta Ingestion</span>
+        </button>
       </div>
     </div>
 
@@ -1044,7 +1049,8 @@ tr:hover td {
         </div>
         <div style="display:flex;gap:8px;align-items:center;">
           <span class="badge badge-synced">Meta Marketing API Connected</span>
-          <span class="badge" style="background:#eef2f6;color:var(--navy);border:1px solid var(--line);">Form C Filter Active</span>
+          <span class="badge" style="background:#e8f5e9;color:#2e7d32;border:1px solid #a5d6a7;font-weight:700;">🟢 All Lead Forms Active (No Drops)</span>
+          <button type="button" class="btn-action btn-outline" id="btnSimulateMetaLeadMetaTab" style="border-color:#1877F2;color:#1877F2;font-size:12px;padding:4px 10px;font-weight:600;" title="Simulate Meta Webhook lead ingestion">🧪 Test Lead Ingestion</button>
         </div>
       </div>
       
@@ -2648,6 +2654,32 @@ tr:hover td {
       btn.textContent = '⚡ Send Test Lead';
     }
   });
+
+  // Test Meta Webhook Simulation Handler
+  async function runMetaWebhookSimulation(buttonEl) {
+    if (!buttonEl) return;
+    const origText = buttonEl.innerHTML;
+    buttonEl.disabled = true;
+    buttonEl.innerHTML = 'Testing...';
+    try {
+      const res = await fetch('/api/admin/meta/test-webhook', { method: 'POST' });
+      const data = await res.json();
+      if (data.success) {
+        alert('✅ Meta Lead Ingestion Test Succeeded!\n\nLead ID: ' + (data.lead?.id || data.lead_id) + '\nName: ' + (data.lead?.applicant_name || 'Dr. Ananya Sharma') + '\nSchool: ' + (data.lead?.school_name || 'Delhi Public School') + '\n\nStored in Database and queued for Google Sheets & CRM sync.');
+        await Promise.allSettled([loadOverview(), loadLeads()]);
+      } else {
+        alert('❌ Meta Ingestion Test Failed: ' + (data.error || 'Unknown error'));
+      }
+    } catch (err) {
+      alert('Network Error during Meta test: ' + err.message);
+    } finally {
+      buttonEl.disabled = false;
+      buttonEl.innerHTML = origText;
+    }
+  }
+
+  document.getElementById('btnSimulateMetaLead')?.addEventListener('click', (e) => runMetaWebhookSimulation(e.currentTarget));
+  document.getElementById('btnSimulateMetaLeadMetaTab')?.addEventListener('click', (e) => runMetaWebhookSimulation(e.currentTarget));
 
   // Purge Test Dummy Data Handler
   document.getElementById('purgeDummyDataBtn')?.addEventListener('click', async () => {

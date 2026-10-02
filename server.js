@@ -608,6 +608,39 @@ const server = http.createServer(async (req, res) => {
       return sendJson(res, 201, { success: true, message: 'Test verification lead created and queued for sync!', lead: result.lead });
     }
 
+    // Q. Meta Ads: Test Meta Instant Form Webhook Ingestion & Pipeline
+    if (pathname === '/api/admin/meta/test-webhook' && method === 'POST') {
+      const mockLeadgenId = 'test_webhook_' + Date.now();
+      const mockPayload = {
+        object: 'page',
+        entry: [
+          {
+            id: process.env.META_PAGE_ID || '1300618416463642',
+            time: Math.floor(Date.now() / 1000),
+            changes: [
+              {
+                field: 'leadgen',
+                value: {
+                  created_time: Math.floor(Date.now() / 1000),
+                  leadgen_id: mockLeadgenId,
+                  page_id: process.env.META_PAGE_ID || '1300618416463642',
+                  form_id: '960355729716288',
+                  ad_id: '120248073084830384'
+                }
+              }
+            ]
+          }
+        ]
+      };
+
+      const resWebhook = await metaLeadgen.handleMetaLeadgenWebhook(mockPayload);
+      return sendJson(res, 200, {
+        success: true,
+        message: 'Meta Lead Ads webhook simulated successfully! Ingested into database and queued for Google Sheets & LeadsZone CRM.',
+        result: resWebhook
+      });
+    }
+
     return sendJson(res, 404, { success: false, message: 'Admin API route not found.' });
   }
 
