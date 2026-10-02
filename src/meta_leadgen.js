@@ -165,21 +165,21 @@ function normalizeMetaFields(fieldData = [], formId = 'instant_form') {
     else if (rawName.includes('city') || rawName.includes('district') || rawName.includes('town') || rawName.includes('location') || rawName.includes('state')) {
       normalized.school_city_district = isTestDummy ? 'Greater Noida, UP' : val;
     }
-    // 3. Full Name
-    else if (rawName.includes('full_name') || rawName === 'name' || rawName.includes('applicant_name') || rawName.includes('your_name')) {
-      normalized.full_name = isTestDummy ? 'Test Lead (Meta Testing Tool)' : val;
+    // 3. School Name (check before applicant name)
+    else if (rawName.includes('school') || rawName.includes('institution') || rawName.includes('academy') || rawName.includes('organization') || rawName.includes('college')) {
+      normalized.school_name = isTestDummy ? 'MMC Career Readiness Partner School' : val;
     }
     // 4. Phone Number
     else if (rawName.includes('phone') || rawName.includes('mobile') || rawName.includes('contact_number') || rawName.includes('whatsapp')) {
       normalized.phone = cleanPhone(val);
     }
     // 5. Email
-    else if (rawName.includes('email')) {
+    else if (rawName.includes('email') || rawName.includes('mail')) {
       normalized.email = isTestDummy ? 'testlead@mymentorcircle.com' : val.toLowerCase().trim();
     }
-    // 6. School Name
-    else if (rawName.includes('school') || rawName.includes('institution') || rawName.includes('academy') || rawName.includes('organization') || rawName.includes('college')) {
-      normalized.school_name = isTestDummy ? 'MMC Career Readiness Partner School' : val;
+    // 6. Full Name
+    else if (rawName.includes('full_name') || rawName.includes('name') || rawName.includes('applicant') || rawName.includes('person')) {
+      normalized.full_name = isTestDummy ? 'Test Lead (Meta Testing Tool)' : val;
     }
   });
 

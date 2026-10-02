@@ -42,7 +42,9 @@ function formatLeadForLeadsZone(lead) {
     name: lead.full_name,
     mobile: lead.phone,
     email: lead.email || '',
-    detail1: detailParts.join(' | ')
+    detail1: detailParts.join(' | '),
+    source: lead.utm_source || 'meta',
+    campaign: lead.utm_campaign || ''
   };
 }
 

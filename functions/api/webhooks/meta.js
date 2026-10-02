@@ -80,12 +80,19 @@ export async function onRequestPost(context) {
                       const val = Array.isArray(item.values) && item.values.length > 0 ? String(item.values[0]).trim() : '';
                       if (!val || val.includes('<test lead:') || val.includes('dummy data')) return;
 
-                      if (key.includes('role') || key.includes('designation')) leadFields.school_role = val;
-                      else if (key.includes('city') || key.includes('district') || key.includes('location')) leadFields.school_city_district = val;
-                      else if (key.includes('full_name') || key === 'name') leadFields.full_name = val;
-                      else if (key.includes('phone') || key.includes('mobile')) leadFields.phone = val;
-                      else if (key.includes('email')) leadFields.email = val;
-                      else if (key.includes('school') || key.includes('institution') || key.includes('academy')) leadFields.school_name = val;
+                      if (key.includes('role') || key.includes('designation') || key.includes('position')) {
+                        leadFields.school_role = val;
+                      } else if (key.includes('city') || key.includes('district') || key.includes('location') || key.includes('town')) {
+                        leadFields.school_city_district = val;
+                      } else if (key.includes('school') || key.includes('institution') || key.includes('academy') || key.includes('college')) {
+                        leadFields.school_name = val;
+                      } else if (key.includes('phone') || key.includes('mobile') || key.includes('contact') || key.includes('whatsapp')) {
+                        leadFields.phone = val;
+                      } else if (key.includes('email') || key.includes('mail')) {
+                        leadFields.email = val;
+                      } else if (key.includes('name') || key.includes('applicant') || key.includes('person')) {
+                        leadFields.full_name = val;
+                      }
                     });
                   }
                 } catch (gErr) {
@@ -99,7 +106,8 @@ export async function onRequestPost(context) {
               else cleanPhoneDigits = '9876543210';
               leadFields.phone = cleanPhoneDigits;
 
-              const dateStr = new Date().toISOString().slice(0, 10).replace(/-/g, '');
+              const nowIso = new Date().toISOString();
+              const dateStr = nowIso.slice(0, 10).replace(/-/g, '');
               const leadId = `lead_${dateStr}_${Math.random().toString(36).substring(2, 8)}`;
               const schoolNameNorm = (leadFields.school_name || 'MMC Career Readiness Partner School').toLowerCase().trim();
               const emailNorm = leadFields.email ? leadFields.email.toLowerCase().trim() : null;
@@ -129,6 +137,7 @@ export async function onRequestPost(context) {
               // Build full lead object for Google Sheets and LeadsZone CRM
               const leadObject = {
                 lead_id: leadId,
+                created_at: nowIso,
                 full_name: leadFields.full_name,
                 phone: cleanPhoneDigits,
                 phone_normalized: cleanPhoneDigits,
@@ -136,9 +145,12 @@ export async function onRequestPost(context) {
                 school_role: leadFields.school_role,
                 school_name: leadFields.school_name,
                 school_city_district: leadFields.school_city_district,
+                consent: 'YES',
+                consent_version: 'v1.0-meta-instant-form',
                 utm_source: 'meta',
                 utm_medium: 'instant_form',
-                utm_campaign: `form_${formId}`
+                utm_campaign: `form_${formId}`,
+                fbclid: String(leadgenId)
               };
 
               // Sync to Google Sheets
