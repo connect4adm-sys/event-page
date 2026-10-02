@@ -1283,7 +1283,7 @@ tr:hover td {
     const origHtml = btn.innerHTML;
     btn.innerHTML = '<span class="table-spinner" style="border-top-color:#fff;border-color:rgba(255,255,255,0.3);width:12px;height:12px;"></span> Refreshing...';
     try {
-      await Promise.allSettled([loadOverview(), loadLeads(), loadMetaAttribution(), loadIntegrations()]);
+      await Promise.allSettled([loadOverview(), loadLeads(), loadVisitorActivity(), loadMetaAttribution(), loadIntegrations()]);
     } finally {
       btn.classList.remove('btn-loading');
       btn.innerHTML = origHtml;
@@ -1750,10 +1750,7 @@ tr:hover td {
     leadsOffset += LEADS_LIMIT; loadLeads();
   });
 
-  // -------------------------------------------------------------
-  // TAB 3: META ADS INTELLIGENCE
-  // -------------------------------------------------------------
-  let metaListLoaded = false;
+
 
   
   // -------------------------------------------------------------
